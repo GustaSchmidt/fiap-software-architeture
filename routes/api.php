@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ClientController;
 
 
 // Rota pública simples para verificar o status da API
@@ -14,9 +15,7 @@ Route::get('/client/{id}', function ($id) {
     return "Buscar o cliente com o id (validamos o CPF no payload):  " . $id;
 });
 
-Route::post('/client/create', function () {
-    return "Criar um novo cliente no app";
-});
+Route::post('/client/create', [ClientController::class, 'store']);
 
 Route::post('/client/update', function () {
     return "Atualizar o cliente";
