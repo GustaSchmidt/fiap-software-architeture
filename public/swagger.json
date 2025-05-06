@@ -166,13 +166,70 @@
     },
     "/api/client/update": {
       "post": {
+        "summary": "Atualizar dados de um cliente",
+        "description": "Atualiza as informações de um cliente existente com base no ID fornecido.",
         "tags": ["Cliente"],
-        "summary": "Atualizar cliente",
-        "description": "Atualiza as informações do cliente existente.",
-        "parameters": [],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "description": "Dados do cliente a serem atualizados",
+            "schema": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "1"
+                },
+                "nome": {
+                  "type": "string",
+                  "example": "João"
+                },
+                "sobrenome": {
+                  "type": "string",
+                  "example": "Silva"
+                },
+                "email": {
+                  "type": "string",
+                  "example": "joao.silva@example.com"
+                },
+                "cpf": {
+                  "type": "string",
+                  "example": "404.562.410-43"
+                },
+                "senha": {
+                  "type": "string",
+                  "example": "098f6bcd4621d373cade4e832627b4f6"
+                }
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Cliente atualizado com sucesso"
+            "description": "Cliente atualizado com sucesso",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Cliente atualizado com sucesso"
+                },
+                "client": {
+                  "$ref": "#/definitions/Client"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado ou erro ao atualizar"
+          },
+          "400": {
+            "description": "Erro de validação"
           }
         }
       }

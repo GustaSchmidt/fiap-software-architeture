@@ -9,17 +9,30 @@ class ClientRepository implements ClientRepositoryInterface
 {
     public function save(DomainClient $domainClient): DomainClient
     {
-        $client = new Client([
-            'nome' => $domainClient->nome,
-            'sobrenome' => $domainClient->sobrenome,
-            'email' => $domainClient->email,
-            'cpf' => $domainClient->cpf,
-            'senha' => $domainClient->senha,
-        ]);
-        $client->save();
+        // Lógica de salvar ou atualizar
+        $client = Client::find($domainClient->id);
 
+        if ($client) {
+            $client->nome = $domainClient->nome;
+            $client->sobrenome = $domainClient->sobrenome;
+            $client->email = $domainClient->email;
+            $client->cpf = $domainClient->cpf;
+            $client->senha = $domainClient->senha;
+            $client->save();
+        } else {
+            // Caso não encontre, cria um novo
+            $client = new Client([
+                'nome' => $domainClient->nome,
+                'sobrenome' => $domainClient->sobrenome,
+                'email' => $domainClient->email,
+                'cpf' => $domainClient->cpf,
+                'senha' => $domainClient->senha,
+            ]);
+            $client->save();
+        }
+
+        // Atualiza o ID do cliente e retorna o cliente
         $domainClient->id = $client->id;
-
         return $domainClient;
     }
 

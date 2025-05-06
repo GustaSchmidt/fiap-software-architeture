@@ -31,4 +31,23 @@ class ClientService
     {
         return $this->repository->findByCpf($cpf);
     }
+
+    public function updateClient(array $data): ?Client
+    {
+        // Verificar se o cliente existe
+        $client = $this->repository->findById($data['id']);
+        if (!$client) {
+            return null;
+        }
+
+        // Atualizar os dados do cliente
+        $client->nome = $data['nome'] ?? $client->nome;
+        $client->sobrenome = $data['sobrenome'] ?? $client->sobrenome;
+        $client->email = $data['email'] ?? $client->email;
+        $client->cpf = $data['cpf'] ?? $client->cpf;
+        $client->senha = $data['senha'] ?? $client->senha;
+
+        // Salvar as alterações
+        return $this->repository->save($client);
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreClientRequest;
+use App\Http\Requests\UpdateClientRequest;
 use App\Services\ClientService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -57,6 +58,26 @@ class ClientController extends Controller
             'email' => $client->email,
             'cpf' => $client->cpf,
         ]);
+    }
+
+    public function update(UpdateClientRequest $request): JsonResponse
+    {
+        // Validação já feita pela UpdateClientRequest
+
+        // Recuperando os dados validados
+        $data = $request->validated();
+
+        // Chamando o serviço para atualizar o cliente
+        $client = $this->service->updateClient($data);
+
+        if (!$client) {
+            return response()->json(['message' => 'Cliente não encontrado ou erro ao atualizar'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Cliente atualizado com sucesso',
+            'client' => $client
+        ], 200);
     }
 }
 
