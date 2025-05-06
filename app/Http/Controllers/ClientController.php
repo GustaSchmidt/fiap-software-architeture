@@ -19,5 +19,22 @@ class ClientController extends Controller
             'message' => 'Cliente criado com sucesso',
         ], 201);
     }
+
+    public function show(string $id): JsonResponse
+    {
+        $client = $this->service->getClientById($id);
+
+        if (!$client) {
+            return response()->json(['message' => 'Cliente não encontrado'], 404);
+        }
+
+        return response()->json([
+            'id' => $client->id,
+            'nome' => $client->nome,
+            'sobrenome' => $client->sobrenome,
+            'email' => $client->email,
+            'cpf' => $client->cpf,
+        ]);
+    }
 }
 

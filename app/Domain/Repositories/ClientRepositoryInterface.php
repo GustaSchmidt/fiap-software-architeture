@@ -7,4 +7,5 @@ use App\Domain\Entities\Client;
 interface ClientRepositoryInterface
 {
     public function save(Client $client): Client;
+    public function findById(string $id): ?Client;
 }

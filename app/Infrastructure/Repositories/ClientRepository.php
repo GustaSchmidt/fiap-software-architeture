@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Infrastructure\Repositories;
 
 use App\Domain\Entities\Client as DomainClient;
@@ -22,5 +21,23 @@ class ClientRepository implements ClientRepositoryInterface
         $domainClient->id = $client->id;
 
         return $domainClient;
+    }
+
+    public function findById(string $id): ?DomainClient
+    {
+        $client = Client::find($id);
+
+        if (!$client) {
+            return null;
+        }
+
+        return new DomainClient(
+            id: $client->id,
+            nome: $client->nome,
+            sobrenome: $client->sobrenome,
+            email: $client->email,
+            cpf: $client->cpf,
+            senha: $client->senha
+        );
     }
 }

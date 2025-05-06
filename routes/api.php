@@ -11,9 +11,7 @@ Route::get('/status', function () {
 });
 
 # Clients
-Route::get('/client/{id}', function ($id) {
-    return "Buscar o cliente com o id (validamos o CPF no payload):  " . $id;
-});
+Route::get('/client/{id}', [ClientController::class, 'show']);
 
 Route::post('/client/create', [ClientController::class, 'store']);
 
