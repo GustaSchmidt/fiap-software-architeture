@@ -79,6 +79,9 @@ composer install
 
 # Gerar a key do projeto Laravel
 php artisan key:generate
+
+# Execultar as migrations
+php artisan migrate:fresh --seed
 ```
 
 Acessar o projeto localmente

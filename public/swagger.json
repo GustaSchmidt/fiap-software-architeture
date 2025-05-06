@@ -1,0 +1,82 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "title": "API de Cliente",
+      "description": "API para gerenciamento de clientes no aplicativo",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/client/{id}": {
+        "get": {
+          "summary": "Buscar cliente por ID",
+          "description": "Retorna informações sobre o cliente com o ID especificado, validando o CPF no payload.",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "ID do cliente"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Cliente encontrado",
+              "schema": {
+                "type": "string"
+              }
+            },
+            "404": {
+              "description": "Cliente não encontrado"
+            }
+          }
+        }
+      },
+      "/client/create": {
+        "post": {
+          "summary": "Criar novo cliente",
+          "description": "Cria um novo cliente no aplicativo.",
+          "parameters": [],
+          "responses": {
+            "201": {
+              "description": "Cliente criado com sucesso"
+            },
+            "400": {
+              "description": "Requisição inválida"
+            }
+          }
+        }
+      },
+      "/client/update": {
+        "post": {
+          "summary": "Atualizar cliente",
+          "description": "Atualiza as informações do cliente existente.",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Cliente atualizado com sucesso"
+            },
+            "400": {
+              "description": "Requisição inválida"
+            }
+          }
+        }
+      },
+      "/client/delete": {
+        "post": {
+          "summary": "Deletar cliente",
+          "description": "Deleta o cliente do aplicativo.",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Cliente deletado com sucesso"
+            },
+            "400": {
+              "description": "Requisição inválida"
+            }
+          }
+        }
+      }
+    }
+  }
+  
