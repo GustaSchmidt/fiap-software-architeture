@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Repositories;
 
 use App\Domain\Entities\Client as DomainClient;
