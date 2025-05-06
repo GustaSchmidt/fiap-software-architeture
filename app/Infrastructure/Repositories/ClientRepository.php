@@ -40,4 +40,22 @@ class ClientRepository implements ClientRepositoryInterface
             senha: $client->senha
         );
     }
+
+    public function findByCpf(string $cpf): ?DomainClient
+    {
+        $client = Client::where('cpf', $cpf)->first();
+
+        if (!$client) {
+            return null;
+        }
+
+        return new DomainClient(
+            id: $client->id,
+            nome: $client->nome,
+            sobrenome: $client->sobrenome,
+            email: $client->email,
+            cpf: $client->cpf,
+            senha: $client->senha
+        );
+    }
 }

@@ -27,4 +27,8 @@ class ClientService
     {
         return $this->repository->findById($id);
     }
+    public function findClientByCpf(string $cpf): ?Client
+    {
+        return $this->repository->findByCpf($cpf);
+    }
 }

@@ -15,6 +15,8 @@ Route::get('/client/{id}', [ClientController::class, 'show']);
 
 Route::post('/client/create', [ClientController::class, 'store']);
 
+Route::post('/client/search_cpf', [ClientController::class, 'searchByCpf']);
+
 Route::post('/client/update', function () {
     return "Atualizar o cliente";
 });

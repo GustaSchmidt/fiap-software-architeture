@@ -49,6 +49,56 @@
         }
       }
     },
+    "/api/client/search_cpf": {
+      "post": {
+        "summary": "Procurar um cliente pelo CPF",
+        "tags": ["Cliente"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Dados do usuario usados no cadastro",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["cpf"],
+              "properties": {
+                "cpf": {
+                  "type": "string",
+                  "example": "404.562.410-43"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente encontrado",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer", "example": 1 },
+                "nome": { "type": "string", "example": "João" },
+                "sobrenome": { "type": "string", "example": "Silva" },
+                "email": { "type": "string", "example": "joao.silva@example.com" },
+                "cpf": { "type": "string", "example": "404.562.410-43" }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
     "/api/client/create": {
       "post": {
         "summary": "Criar um novo cliente",
@@ -83,7 +133,7 @@
                 },
                 "cpf": {
                   "type": "string",
-                  "example": "123.456.789-00"
+                  "example": "404.562.410-43"
                 },
                 "senha": {
                   "type": "string",
