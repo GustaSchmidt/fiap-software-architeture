@@ -64,5 +64,22 @@ Este projeto tem como objetivo desenvolver o backend de um sistema de autoatendi
 git clone https://github.com/seu-usuario/seu-repo.git
 cd seu-repo
 
-# Suba os containers
+# Crie o Arquivo .env
+# Atualize as variáveis de ambiente do arquivo .env de acordo com seu ambiente
+cp .env.example .env
+
+# Suba os containers do projeto
 docker-compose up --build
+
+# Acessar o container
+docker-compose exec app bash
+
+# Instalar as dependências do projeto
+composer install
+
+# Gerar a key do projeto Laravel
+php artisan key:generate
+```
+
+Acessar o projeto localmente
+[http://localhost:8989](http://localhost:8989)
