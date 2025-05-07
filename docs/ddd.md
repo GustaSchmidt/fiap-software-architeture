@@ -1,19 +1,19 @@
 # Domain Driven Design
 
 ## 1. Linguagem Obiqua
-| Termo                 | Significado                                                                 |
-|----------------------|------------------------------------------------------------------------------|
-| Cliente              | Pessoa que realiza o pedido pelo totem de autoatendimento.                  |
-| Pedido               | Requisição de um ou mais itens feita por um cliente.                        |
-| Item do Pedido       | Produto selecionado pelo cliente (lanche, acompanhamento, bebida, sobremesa).|
-| Combo                | Conjunto de itens escolhidos pelo cliente.                                  |
-| Checkout             | Etapa final do pedido, onde ocorre o pagamento.                             |
-| Cozinha              | Setor responsável pela preparação dos pedidos.                              |
-| Painel do Cliente    | Tela de acompanhamento que mostra o status dos pedidos.                     |
-| Painel Administrativo| Interface para gerenciamento de produtos, categorias e pedidos.             |
-| Categoria            | Classificação do item: Lanche, Acompanhamento, Bebida, Sobremesa.           |
-| QR Code Mercado Pago | Meio de pagamento utilizado para finalizar o pedido.                        |
-
+| Termo                 | Significado                                                                         |
+|----------------------|--------------------------------------------------------------------------------------|
+| Cliente              | Pessoa que realiza o pedido pelo totem de autoatendimento.                           |
+| Pedido               | Requisição de um ou mais itens feita por um cliente.                                 |
+| Produto              | Item do Pedido  selecionado pelo cliente (lanche, acompanhamento, bebida, sobremesa).|
+| Combo                | Conjunto de itens escolhidos pelo cliente.                                           |
+| Checkout             | Etapa final do pedido, onde ocorre o pagamento.                                      |
+| Cozinha              | Setor responsável pela preparação dos pedidos.                                       |
+| Painel do Cliente    | Tela de acompanhamento que mostra o status dos pedidos.                              |
+| Painel Administrativo| Interface para gerenciamento de produtos, categorias e pedidos.                      |
+| Categoria            | Classificação do item: Lanche, Acompanhamento, Bebida, Sobremesa.                    |
+| QR Code Mercado Pago | Meio de pagamento utilizado para finalizar o pedido.                                 |
+| **Loja**              | Estabelecimento responsável pela venda de produtos alimentícios.                    |
 
 ## 2. Event Storming
 
