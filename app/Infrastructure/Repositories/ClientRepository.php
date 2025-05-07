@@ -71,4 +71,15 @@ class ClientRepository implements ClientRepositoryInterface
             senha: $client->senha
         );
     }
+
+    public function deleteById(int $id): bool
+    {
+        $client = Client::find($id);
+
+        if (!$client) {
+            return false;
+        }
+
+        return (bool) $client->delete();
+    }
 }

@@ -50,4 +50,9 @@ class ClientService
         // Salvar as alterações
         return $this->repository->save($client);
     }
+
+    public function deleteClient(int $id): bool
+    {
+        return $this->repository->deleteById($id);
+    }
 }

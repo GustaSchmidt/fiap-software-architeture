@@ -79,5 +79,22 @@ class ClientController extends Controller
             'client' => $client
         ], 200);
     }
+
+    public function delete(Request $request): JsonResponse
+    {
+        $id = (int) $request->query('id');
+
+        if (!$id) {
+            return response()->json(['error' => 'ID é obrigatório'], 400);
+        }
+
+        $deleted = $this->service->deleteClient($id);
+
+        if (!$deleted) {
+            return response()->json(['error' => 'Cliente não encontrado'], 404);
+        }
+
+        return response()->json(['message' => 'Cliente deletado com sucesso']);
+    }
 }
 

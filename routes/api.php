@@ -19,10 +19,7 @@ Route::post('/client/search_cpf', [ClientController::class, 'searchByCpf']);
 
 Route::post('/client/update', [ClientController::class, 'update']);
 
-Route::post('/client/delete', function () {
-    return "Deletar o cliente";
-});
-
+Route::delete('/client/delete', [ClientController::class, 'delete']);
 
 # Falback se tudo der errado cai aqui
 Route::fallback(function(){
