@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,17 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable = [
-        'nome',
-        'descricao',
-        'preco',
-        'loja_id',
-        'ingredientes',
-        'informacoes_nutricionais',
-        'porcao',
+        'nome', 'preco', 'categoria', 'ingredientes', 'porcao', 'informacoes_nutricionais', 'alergenicos', 'loja_id'
     ];
 
     protected $casts = [
+        'ingredientes' => 'array',
         'informacoes_nutricionais' => 'array',
-        'preco' => 'decimal:2',
     ];
 }

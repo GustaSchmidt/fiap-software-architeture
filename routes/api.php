@@ -3,7 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
-
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\LojaController;
 
 // Rota pública simples para verificar o status da API
 Route::get('/status', function () {
@@ -20,6 +21,12 @@ Route::post('/client/search_cpf', [ClientController::class, 'searchByCpf']);
 Route::post('/client/update', [ClientController::class, 'update']);
 
 Route::delete('/client/delete', [ClientController::class, 'delete']);
+
+# Loja
+Route::post('/loja/create', [LojaController::class, 'store']);
+
+# Products
+Route::post('/product/create', [ProductController::class, 'create']);
 
 # Falback se tudo der errado cai aqui
 Route::fallback(function(){

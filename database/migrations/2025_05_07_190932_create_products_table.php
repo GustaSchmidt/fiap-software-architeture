@@ -16,10 +16,14 @@ return new class extends Migration {
             $table->decimal('preco', 10, 2);
             $table->unsignedBigInteger('loja_id');
 
+            // Adicionando a coluna 'categoria'
+            $table->string('categoria')->nullable(); // Ex: "Confeitaria"
+
             // Informações alimentícias
             $table->text('ingredientes')->nullable();
             $table->json('informacoes_nutricionais')->nullable(); // Ex: {"calorias": 250, "proteinas": 10}
             $table->string('porcao')->nullable(); // Ex: "100g", "1 unidade", etc.
+            $table->string('alergenicos')->nullable(); // Ex: "Contém glúten e ovos"
 
             $table->timestamps();
 

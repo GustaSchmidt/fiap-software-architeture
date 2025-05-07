@@ -206,6 +206,52 @@
         }
       }
     },
+    "/api/loja/create": {
+      "post": {
+        "tags": ["Loja"],
+        "summary": "Criar nova loja",
+        "description": "Cria uma nova loja no sistema.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["nome", "endereco"],
+              "properties": {
+                "nome": { 
+                  "type": "string", 
+                  "example": "Loja Centro" 
+                },
+                "endereco": { 
+                  "type": "string", 
+                  "example": "Rua das Flores, 123" 
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Loja criada com sucesso",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer", "example": 1 },
+                "message": { "type": "string", "example": "Loja criada com sucesso" }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
     "/api/product/create": {
       "post": {
         "tags": ["Produto"],
@@ -219,7 +265,7 @@
             "required": true,
             "schema": {
               "type": "object",
-              "required": ["nome", "preco", "categoria", "ingredientes", "porcao", "informacoes_nutricionais"],
+              "required": ["nome", "preco", "categoria", "ingredientes", "porcao", "informacoes_nutricionais", "loja_id"],
               "properties": {
                 "nome": { "type": "string", "example": "Bolo de Cenoura" },
                 "preco": { "type": "number", "example": 12.5 },
@@ -239,7 +285,8 @@
                     "carboidratos": { "type": "number", "example": 35.0 }
                   }
                 },
-                "alergenicos": { "type": "string", "example": "Contém glúten e ovos" }
+                "alergenicos": { "type": "string", "example": "Contém glúten e ovos" },
+                "loja_id": { "type": "integer", "example": 1 }
               }
             }
           }
