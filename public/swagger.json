@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "API Food Delivery",
-    "description": "API para gerenciamento delivery de comida",
+    "description": "API para gerenciamento de clientes no sistema de delivery de comida.",
     "version": "1.0.0"
   },
   "securityDefinitions": {
@@ -21,27 +21,41 @@
   "tags": [
     {
       "name": "Cliente",
-      "description": "Operações relacionadas a clientes"
+      "description": "Operações relacionadas aos clientes"
     }
   ],
+  "definitions": {
+    "Client": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "example": 1 },
+        "nome": { "type": "string", "example": "João" },
+        "sobrenome": { "type": "string", "example": "Silva" },
+        "email": { "type": "string", "format": "email", "example": "joao.silva@example.com" },
+        "cpf": { "type": "string", "example": "404.562.410-43" },
+        "senha": { "type": "string", "format": "md5", "example": "098f6bcd4621d373cade4e832627b4f6" }
+      }
+    }
+  },
   "paths": {
     "/api/client/{id}": {
       "get": {
         "tags": ["Cliente"],
         "summary": "Buscar cliente por ID",
-        "description": "Retorna informações sobre o cliente com o ID especificado, validando o CPF no payload.",
+        "description": "Retorna os dados do cliente com o ID especificado.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
+            "type": "integer",
             "description": "ID do cliente"
           }
         ],
         "responses": {
           "200": {
-            "description": "Cliente encontrado"
+            "description": "Cliente encontrado",
+            "schema": { "$ref": "#/definitions/Client" }
           },
           "404": {
             "description": "Cliente não encontrado"
@@ -51,18 +65,13 @@
     },
     "/api/client/search_cpf": {
       "post": {
-        "summary": "Procurar um cliente pelo CPF",
         "tags": ["Cliente"],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
+        "summary": "Buscar cliente por CPF",
+        "description": "Retorna os dados do cliente correspondente ao CPF informado.",
         "parameters": [
           {
             "name": "body",
             "in": "body",
-            "description": "Dados do usuario usados no cadastro",
             "required": true,
             "schema": {
               "type": "object",
@@ -79,19 +88,10 @@
         "responses": {
           "200": {
             "description": "Cliente encontrado",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "id": { "type": "integer", "example": 1 },
-                "nome": { "type": "string", "example": "João" },
-                "sobrenome": { "type": "string", "example": "Silva" },
-                "email": { "type": "string", "example": "joao.silva@example.com" },
-                "cpf": { "type": "string", "example": "404.562.410-43" }
-              }
-            }
+            "schema": { "$ref": "#/definitions/Client" }
           },
           "400": {
-            "description": "Erro de validação"
+            "description": "CPF inválido"
           },
           "401": {
             "description": "Não autorizado"
@@ -101,45 +101,23 @@
     },
     "/api/client/create": {
       "post": {
-        "summary": "Criar um novo cliente",
         "tags": ["Cliente"],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
+        "summary": "Criar novo cliente",
+        "description": "Cria um novo cliente no sistema.",
         "parameters": [
           {
             "name": "body",
             "in": "body",
-            "description": "Dados do usuario usados no cadastro",
             "required": true,
             "schema": {
               "type": "object",
               "required": ["nome", "sobrenome", "email", "cpf", "senha"],
               "properties": {
-                "nome": {
-                  "type": "string",
-                  "example": "João"
-                },
-                "sobrenome": {
-                  "type": "string",
-                  "example": "Silva"
-                },
-                "email": {
-                  "type": "string",
-                  "format": "email",
-                  "example": "joao.silva@example.com"
-                },
-                "cpf": {
-                  "type": "string",
-                  "example": "404.562.410-43"
-                },
-                "senha": {
-                  "type": "string",
-                  "format": "md5",
-                  "example": "a8748f31d542005abb46c2e835215913"
-                }
+                "nome": { "type": "string", "example": "João" },
+                "sobrenome": { "type": "string", "example": "Silva" },
+                "email": { "type": "string", "format": "email", "example": "joao.silva@example.com" },
+                "cpf": { "type": "string", "example": "404.562.410-43" },
+                "senha": { "type": "string", "format": "md5", "example": "a8748f31d542005abb46c2e835215913" }
               }
             }
           }
@@ -166,45 +144,24 @@
     },
     "/api/client/update": {
       "post": {
-        "summary": "Atualizar dados de um cliente",
-        "description": "Atualiza as informações de um cliente existente com base no ID fornecido.",
         "tags": ["Cliente"],
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
+        "summary": "Atualizar cliente",
+        "description": "Atualiza as informações de um cliente existente.",
         "parameters": [
           {
-            "in": "body",
             "name": "body",
+            "in": "body",
             "required": true,
-            "description": "Dados do cliente a serem atualizados",
             "schema": {
               "type": "object",
               "required": ["id"],
               "properties": {
-                "id": {
-                  "type": "string",
-                  "example": "1"
-                },
-                "nome": {
-                  "type": "string",
-                  "example": "João"
-                },
-                "sobrenome": {
-                  "type": "string",
-                  "example": "Silva"
-                },
-                "email": {
-                  "type": "string",
-                  "example": "joao.silva@example.com"
-                },
-                "cpf": {
-                  "type": "string",
-                  "example": "404.562.410-43"
-                },
-                "senha": {
-                  "type": "string",
-                  "example": "098f6bcd4621d373cade4e832627b4f6"
-                }
+                "id": { "type": "integer", "example": 1 },
+                "nome": { "type": "string", "example": "João" },
+                "sobrenome": { "type": "string", "example": "Silva" },
+                "email": { "type": "string", "format": "email", "example": "joao.silva@example.com" },
+                "cpf": { "type": "string", "example": "404.562.410-43" },
+                "senha": { "type": "string", "example": "098f6bcd4621d373cade4e832627b4f6" }
               }
             }
           }
@@ -215,34 +172,36 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": {
-                  "type": "string",
-                  "example": "Cliente atualizado com sucesso"
-                },
-                "client": {
-                  "$ref": "#/definitions/Client"
-                }
+                "message": { "type": "string", "example": "Cliente atualizado com sucesso" },
+                "client": { "$ref": "#/definitions/Client" }
               }
             }
           },
-          "404": {
-            "description": "Cliente não encontrado ou erro ao atualizar"
-          },
-          "400": {
-            "description": "Erro de validação"
-          }
+          "400": { "description": "Erro de validação" },
+          "404": { "description": "Cliente não encontrado" }
         }
       }
     },
     "/api/client/delete": {
-      "post": {
+      "delete": {
         "tags": ["Cliente"],
         "summary": "Deletar cliente",
-        "description": "Deleta o cliente do aplicativo.",
-        "parameters": [],
+        "description": "Remove um cliente do sistema com base no ID fornecido.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "type": "integer",
+            "description": "ID do cliente a ser deletado"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Cliente deletado com sucesso"
+          },
+          "404": {
+            "description": "Cliente não encontrado"
           }
         }
       }
