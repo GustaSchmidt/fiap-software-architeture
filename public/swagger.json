@@ -205,6 +205,164 @@
           }
         }
       }
+    },
+    "/api/product/create": {
+      "post": {
+        "tags": ["Produto"],
+        "summary": "Criar produto alimentício",
+        "description": "Cria um produto alimentício em uma loja. Requer API Key da loja.",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["nome", "preco", "categoria", "ingredientes", "porcao", "informacoes_nutricionais"],
+              "properties": {
+                "nome": { "type": "string", "example": "Bolo de Cenoura" },
+                "preco": { "type": "number", "example": 12.5 },
+                "categoria": { "type": "string", "example": "Confeitaria" },
+                "ingredientes": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "example": ["cenoura", "açúcar", "farinha de trigo", "ovos"]
+                },
+                "porcao": { "type": "string", "example": "100g" },
+                "informacoes_nutricionais": {
+                  "type": "object",
+                  "properties": {
+                    "calorias": { "type": "integer", "example": 250 },
+                    "proteinas": { "type": "number", "example": 3.5 },
+                    "gorduras": { "type": "number", "example": 8.0 },
+                    "carboidratos": { "type": "number", "example": 35.0 }
+                  }
+                },
+                "alergenicos": { "type": "string", "example": "Contém glúten e ovos" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Produto criado com sucesso" },
+          "401": { "description": "Não autorizado" }
+        }
+      }
+    },
+    "/api/product/update": {
+      "post": {
+        "tags": ["Produto"],
+        "summary": "Atualizar produto alimentício",
+        "description": "Atualiza informações de um produto alimentício. Requer API Key da loja.",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "integer", "example": 1 },
+                "nome": { "type": "string", "example": "Bolo de Chocolate" },
+                "preco": { "type": "number", "example": 13.0 },
+                "categoria": { "type": "string", "example": "Confeitaria" },
+                "ingredientes": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "example": ["chocolate", "açúcar", "farinha de trigo", "ovos"]
+                },
+                "porcao": { "type": "string", "example": "1 fatia (120g)" },
+                "informacoes_nutricionais": {
+                  "type": "object",
+                  "properties": {
+                    "calorias": { "type": "integer", "example": 300 },
+                    "proteinas": { "type": "number", "example": 4.0 },
+                    "gorduras": { "type": "number", "example": 10.0 },
+                    "carboidratos": { "type": "number", "example": 40.0 }
+                  }
+                },
+                "alergenicos": { "type": "string", "example": "Contém glúten, ovos e leite" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Produto atualizado com sucesso" },
+          "401": { "description": "Não autorizado" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      }
+    },
+    "/api/product/delete": {
+      "delete": {
+        "tags": ["Produto"],
+        "summary": "Deletar produto alimentício",
+        "description": "Remove um produto alimentício da loja. Requer API Key da loja.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "type": "integer",
+            "description": "ID do produto a ser deletado"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto deletado com sucesso"
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/api/product/search": {
+      "post": {
+        "tags": ["Produto"],
+        "summary": "Buscar produtos alimentícios",
+        "description": "Busca produtos alimentícios por categoria em todo o app.",
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Categoria dos produtos para filtrar a busca"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de produtos encontrados",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "integer", "example": 1 },
+                  "nome": { "type": "string", "example": "Suco Natural" },
+                  "preco": { "type": "number", "example": 6.5 },
+                  "categoria": { "type": "string", "example": "Bebidas" },
+                  "porcao": { "type": "string", "example": "300ml" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autorizado" }
+        }
+      }
     }
+
   }
 }
