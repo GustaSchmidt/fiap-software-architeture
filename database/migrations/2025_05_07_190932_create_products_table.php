@@ -29,6 +29,9 @@ return new class extends Migration {
 
             // Foreign key loja_id -> lojas.id (se a tabela lojas existir)
             $table->foreign('loja_id')->references('id')->on('lojas')->onDelete('cascade');
+
+            // Garantir que não haja dois produtos com o mesmo nome para a mesma loja
+            $table->unique(['nome', 'loja_id'], 'unique_product_per_loja');
         });
     }
 
