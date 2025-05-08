@@ -24,4 +24,23 @@ class ProductRepository implements ProductRepositoryInterface
         $domainProduct->id = $model->id;
         return $domainProduct;
     }
+    public function findById(int $id): ?DomainProduct
+    {
+        $product = Product::find($id); // Usando find() para buscar o produto
+        if ($product) {
+            return new DomainProduct(
+                $product->id,
+                $product->nome,
+                $product->preco,
+                $product->categoria,
+                json_decode($product->ingredientes, true),
+                $product->porcao,
+                json_decode($product->informacoes_nutricionais, true),
+                $product->alergenicos,
+                $product->loja_id
+            );
+        }
+
+        return null; // Retorna null se não encontrar o produto
+    }
 }

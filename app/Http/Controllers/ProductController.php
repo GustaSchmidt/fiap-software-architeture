@@ -9,7 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
-    public function __construct(private ProductService $service) {}
+    private ProductService $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
 
     public function create(StoreProductRequest $request): JsonResponse
     {
@@ -23,5 +28,15 @@ class ProductController extends Controller
             // Para outros erros, retorna erro genérico
             return response()->json(['message' => 'Erro ao criar produto', 'error' => $e->getMessage()], 500);
         }
+    }
+    public function show(int $id): JsonResponse
+    {
+        $product = $this->productService->getProductById($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Produto não encontrado'], 404);
+        }
+
+        return response()->json($product);
     }
 }

@@ -3,16 +3,15 @@ namespace App\Services;
 
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
+use App\Domain\Repositories\ProductRepositoryInterface;
 
 class ProductService
 {
-    /**
-     * Cria um novo produto, com verificação de duplicidade.
-     *
-     * @param array $data
-     * @return Product
-     * @throws ValidationException
-     */
+    private $productRepository;
+    public function __construct(ProductRepositoryInterface $productRepository)
+    {
+        $this->productRepository = $productRepository;
+    }
     public function createProduct(array $data): Product
     {
         // Verifica se o produto já existe para a loja
@@ -38,5 +37,15 @@ class ProductService
             'alergenicos' => $data['alergenicos'],
             'loja_id' => $data['loja_id'],
         ]);
+    }
+    public function getProductById(int $id): array
+    {
+        $product = $this->productRepository->findById($id);
+
+        if (!$product) {
+            throw new \Exception('Produto não encontrado');
+        }
+
+        return $product->toArray();
     }
 }

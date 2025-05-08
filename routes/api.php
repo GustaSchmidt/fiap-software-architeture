@@ -28,6 +28,9 @@ Route::post('/loja/create', [LojaController::class, 'store']);
 # Products
 Route::post('/product/create', [ProductController::class, 'create']);
 
+Route::get('/product/{id}', [ProductController::class, 'show']);
+
+
 # Falback se tudo der errado cai aqui
 Route::fallback(function(){
     return response()->json([

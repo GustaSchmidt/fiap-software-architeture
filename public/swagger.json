@@ -297,11 +297,146 @@
         }
       }
     },
+    "/api/product/{id}": {
+      "get": {
+        "tags": ["Produto"],
+        "summary": "Obter informações de um produto alimentício",
+        "description": "Retorna os detalhes de um produto existente pelo ID. Requer API Key da loja.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID do produto",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto encontrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "nome": {
+                      "type": "string",
+                      "example": "Bolo de Cenoura"
+                    },
+                    "preco": {
+                      "type": "number",
+                      "example": 12.5
+                    },
+                    "categoria": {
+                      "type": "string",
+                      "example": "Confeitaria"
+                    },
+                    "ingredientes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": ["cenoura", "açúcar", "farinha de trigo", "ovos"]
+                    },
+                    "porcao": {
+                      "type": "string",
+                      "example": "100g"
+                    },
+                    "informacoes_nutricionais": {
+                      "type": "object",
+                      "properties": {
+                        "calorias": {
+                          "type": "integer",
+                          "example": 250
+                        },
+                        "proteinas": {
+                          "type": "number",
+                          "example": 3.5
+                        },
+                        "gorduras": {
+                          "type": "number",
+                          "example": 8.0
+                        },
+                        "carboidratos": {
+                          "type": "number",
+                          "example": 35.0
+                        }
+                      }
+                    },
+                    "alergenicos": {
+                      "type": "string",
+                      "example": "Contém glúten e ovos"
+                    },
+                    "loja_id": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/api/product/category_list": {
+      "post": {
+        "tags": ["Produto"],
+        "summary": "Buscar produtos alimentícios",
+        "description": "Busca produtos alimentícios por categoria em todo o app.",
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Categoria dos produtos para filtrar a busca"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de produtos encontrados",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "integer", "example": 1 },
+                  "nome": { "type": "string", "example": "Suco Natural" },
+                  "preco": { "type": "number", "example": 6.5 },
+                  "categoria": { "type": "string", "example": "Bebidas" },
+                  "porcao": { "type": "string", "example": "300ml" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autorizado" }
+        }
+      }
+    },
     "/api/product/update": {
       "post": {
         "tags": ["Produto"],
         "summary": "Atualizar produto alimentício",
-        "description": "Atualiza informações de um produto alimentício. Requer API Key da loja.",
+        "description": "Atualiza os dados de um produto existente. Requer API Key da loja.",
         "security": [{ "ApiKeyAuth": [] }],
         "parameters": [
           {
@@ -310,36 +445,43 @@
             "required": true,
             "schema": {
               "type": "object",
-              "required": ["id"],
+              "required": ["id", "nome", "preco", "categoria", "ingredientes", "porcao", "informacoes_nutricionais", "loja_id"],
               "properties": {
                 "id": { "type": "integer", "example": 1 },
-                "nome": { "type": "string", "example": "Bolo de Chocolate" },
-                "preco": { "type": "number", "example": 13.0 },
+                "nome": { "type": "string", "example": "Bolo de Cenoura" },
+                "preco": { "type": "number", "example": 12.5 },
                 "categoria": { "type": "string", "example": "Confeitaria" },
                 "ingredientes": {
                   "type": "array",
                   "items": { "type": "string" },
-                  "example": ["chocolate", "açúcar", "farinha de trigo", "ovos"]
+                  "example": ["cenoura", "açúcar", "farinha de trigo", "ovos"]
                 },
-                "porcao": { "type": "string", "example": "1 fatia (120g)" },
+                "porcao": { "type": "string", "example": "100g" },
                 "informacoes_nutricionais": {
                   "type": "object",
                   "properties": {
-                    "calorias": { "type": "integer", "example": 300 },
-                    "proteinas": { "type": "number", "example": 4.0 },
-                    "gorduras": { "type": "number", "example": 10.0 },
-                    "carboidratos": { "type": "number", "example": 40.0 }
+                    "calorias": { "type": "integer", "example": 250 },
+                    "proteinas": { "type": "number", "example": 3.5 },
+                    "gorduras": { "type": "number", "example": 8.0 },
+                    "carboidratos": { "type": "number", "example": 35.0 }
                   }
                 },
-                "alergenicos": { "type": "string", "example": "Contém glúten, ovos e leite" }
+                "alergenicos": { "type": "string", "example": "Contém glúten e ovos" },
+                "loja_id": { "type": "integer", "example": 1 }
               }
             }
           }
         ],
         "responses": {
-          "200": { "description": "Produto atualizado com sucesso" },
-          "401": { "description": "Não autorizado" },
-          "404": { "description": "Produto não encontrado" }
+          "200": {
+            "description": "Produto atualizado com sucesso"
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
         }
       }
     },
@@ -374,42 +516,6 @@
           }
         }
       }
-    },
-    "/api/product/search": {
-      "post": {
-        "tags": ["Produto"],
-        "summary": "Buscar produtos alimentícios",
-        "description": "Busca produtos alimentícios por categoria em todo o app.",
-        "parameters": [
-          {
-            "name": "categoria",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "Categoria dos produtos para filtrar a busca"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de produtos encontrados",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": { "type": "integer", "example": 1 },
-                  "nome": { "type": "string", "example": "Suco Natural" },
-                  "preco": { "type": "number", "example": 6.5 },
-                  "categoria": { "type": "string", "example": "Bebidas" },
-                  "porcao": { "type": "string", "example": "300ml" }
-                }
-              }
-            }
-          },
-          "401": { "description": "Não autorizado" }
-        }
-      }
     }
-
   }
 }
