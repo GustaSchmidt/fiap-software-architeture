@@ -31,9 +31,3 @@ Route::post('/product/create', [ProductController::class, 'create']);
 Route::get('/product/{id}', [ProductController::class, 'show']);
 
 Route::post('/product/category_list', [ProductController::class, 'listByCategory']);
-
-# Falback se tudo der errado cai aqui
-Route::fallback(function(){
-    return response()->json([
-        'message' => 'Endpoint não encontrado. Verifique a URL e o método HTTP.'], 404);
-});
