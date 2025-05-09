@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
@@ -38,5 +39,13 @@ class ProductController extends Controller
         }
 
         return response()->json($product);
+    }
+
+    public function listByCategory(Request $request)
+    {
+        $categoria = $request->query('categoria');
+        $produtos = $this->productService->listByCategory($categoria);
+
+        return response()->json($produtos);
     }
 }

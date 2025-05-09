@@ -43,4 +43,24 @@ class ProductRepository implements ProductRepositoryInterface
 
         return null; // Retorna null se não encontrar o produto
     }
+
+    public function findByCategory(?string $categoria): array
+    {
+        $query = Product::query();
+
+        if ($categoria) {
+            $query->where('categoria', $categoria);
+        }
+
+        return $query->get()->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'nome' => $product->nome,
+                'preco' => $product->preco,
+                'categoria' => $product->categoria,
+                'porcao' => $product->porcao,
+            ];
+        })->toArray();
+    }
+
 }

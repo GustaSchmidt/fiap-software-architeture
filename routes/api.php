@@ -30,6 +30,7 @@ Route::post('/product/create', [ProductController::class, 'create']);
 
 Route::get('/product/{id}', [ProductController::class, 'show']);
 
+Route::post('/product/category_list', [ProductController::class, 'listByCategory']);
 
 # Falback se tudo der errado cai aqui
 Route::fallback(function(){

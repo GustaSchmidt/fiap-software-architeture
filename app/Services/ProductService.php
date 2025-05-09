@@ -48,4 +48,8 @@ class ProductService
 
         return $product->toArray();
     }
+    public function listByCategory(?string $categoria): array
+    {
+        return $this->productRepository->findByCategory($categoria);
+    }
 }
