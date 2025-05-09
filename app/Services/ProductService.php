@@ -52,4 +52,8 @@ class ProductService
     {
         return $this->productRepository->findByCategory($categoria);
     }
+    public function update(array $data): bool
+    {
+        return $this->productRepository->update($data['id'], $data);
+    }
 }

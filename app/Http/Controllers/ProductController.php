@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -47,5 +48,16 @@ class ProductController extends Controller
         $produtos = $this->productService->listByCategory($categoria);
 
         return response()->json($produtos);
+    }
+
+    public function update(UpdateProductRequest $request): JsonResponse
+    {
+        $updated = $this->productService->update($request->validated());
+
+        if (!$updated) {
+            return response()->json(['message' => 'Produto não encontrado'], 404);
+        }
+
+        return response()->json(['message' => 'Produto atualizado com sucesso']);
     }
 }

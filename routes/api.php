@@ -31,3 +31,6 @@ Route::post('/product/create', [ProductController::class, 'create']);
 Route::get('/product/{id}', [ProductController::class, 'show']);
 
 Route::post('/product/category_list', [ProductController::class, 'listByCategory']);
+
+Route::post('/product/update', [ProductController::class, 'update']);
+

@@ -62,5 +62,24 @@ class ProductRepository implements ProductRepositoryInterface
             ];
         })->toArray();
     }
+    public function update(int $id, array $data): bool
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return false;
+        }
+
+        $product->nome = $data['nome'];
+        $product->preco = $data['preco'];
+        $product->categoria = $data['categoria'];
+        $product->ingredientes = $data['ingredientes'];
+        $product->porcao = $data['porcao'];
+        $product->informacoes_nutricionais = $data['informacoes_nutricionais'];
+        $product->alergenicos = $data['alergenicos'] ?? null;
+        $product->loja_id = $data['loja_id'];
+
+        return $product->save();
+    }
 
 }
