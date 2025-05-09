@@ -15,5 +15,38 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->renderable(function (MethodNotAllowedHttpException $e, $request) {
+            Log::warning('Método não permitido', [
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json(['message' => 'Método HTTP não permitido para este endpoint.'], 405);    
+        });
+
+        $exceptions->renderable(function (NotFoundHttpException $e, $request) {
+            Log::notice('Endpoint não encontrado', [
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json(['message' => 'Endpoint não encontrado. Verifique a URL.'], 404);
+        });
+
+        $exceptions->renderable(function (Throwable $e, $request) {
+            Log::error('Erro interno no servidor', [
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+            ]);
+
+            return response()->json([
+                'message' => 'Erro interno no servidor',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        });
     })->create();

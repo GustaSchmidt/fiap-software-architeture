@@ -20,21 +20,3 @@ Route::middleware([])->get('/swagger', function () {
         'Content-Disposition' => 'inline; filename="swagger.json"',
     ]);
 });
-
-# Produtos
-Route::post('/product/create', function () {
-    return "criando produtos por loja requer API key de loja";
-});
-
-Route::post('/product/update', function () {
-    return "Atualiza produtos por loja requer API key de loja";
-});
-
-Route::post('/product/delete', function () {
-    return "deleta produtos por loja requer API key de loja";
-});
-
-Route::post('/product/search', function () {
-    return "busca produtor em todo o APP por categoria";
-});
-
