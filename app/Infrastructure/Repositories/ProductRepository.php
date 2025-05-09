@@ -81,5 +81,15 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $product->save();
     }
+    public function delete(int $id): bool
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return false;
+        }
+
+        return $product->delete();
+    }
 
 }

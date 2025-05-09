@@ -34,3 +34,4 @@ Route::post('/product/category_list', [ProductController::class, 'listByCategory
 
 Route::post('/product/update', [ProductController::class, 'update']);
 
+Route::delete('/product/delete', [ProductController::class, 'delete']);

@@ -56,4 +56,8 @@ class ProductService
     {
         return $this->productRepository->update($data['id'], $data);
     }
+    public function delete(int $id): bool
+    {
+        return $this->productRepository->delete($id);
+    }
 }

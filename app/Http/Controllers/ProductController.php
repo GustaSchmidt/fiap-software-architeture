@@ -60,4 +60,19 @@ class ProductController extends Controller
 
         return response()->json(['message' => 'Produto atualizado com sucesso']);
     }
+    
+    public function delete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:products,id'
+        ]);
+
+        $deleted = $this->productService->delete($request->input('id'));
+
+        if (!$deleted) {
+            return response()->json(['message' => 'Produto não encontrado'], 404);
+        }
+
+        return response()->json(['message' => 'Produto deletado com sucesso']);
+    }
 }
