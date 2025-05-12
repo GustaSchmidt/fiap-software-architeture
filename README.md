@@ -54,8 +54,8 @@ Endpoints documentados em swagger no /public/swagger.json
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/seu-repo.git
-cd seu-repo
+git clone https://github.com/GustaSchmidt/fiap-software-architeture.git
+cd fiap-software-architeture
 
 # Crie o Arquivo .env
 # Atualize as variáveis de ambiente do arquivo .env de acordo com seu ambiente
