@@ -9,7 +9,7 @@ Route::get('/', function () {
 });
 
 Route::middleware([])->get('/swagger', function () {
-    $path = public_path('swagger.json');
+    $path = base_path('docs/swagger.json');
 
     if (!file_exists($path)) {
         abort(404);
