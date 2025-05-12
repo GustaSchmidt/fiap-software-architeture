@@ -4,6 +4,7 @@
 | Termo                 | Significado                                                                         |
 |----------------------|--------------------------------------------------------------------------------------|
 | Cliente              | Pessoa que realiza o pedido pelo totem de autoatendimento.                           |
+| Sacola               | Grupo de produtos relacionados a uma ou mais lojas.                                  |
 | Pedido               | Requisição de um ou mais itens feita por um cliente.                                 |
 | Produto              | Item do Pedido  selecionado pelo cliente (lanche, acompanhamento, bebida, sobremesa).|
 | Combo                | Conjunto de itens escolhidos pelo cliente.                                           |
@@ -13,7 +14,7 @@
 | Painel Administrativo| Interface para gerenciamento de produtos, categorias e pedidos.                      |
 | Categoria            | Classificação do item: Lanche, Acompanhamento, Bebida, Sobremesa.                    |
 | QR Code Mercado Pago | Meio de pagamento utilizado para finalizar o pedido.                                 |
-| **Loja**              | Estabelecimento responsável pela venda de produtos alimentícios.                    |
+| **Loja**             | Estabelecimento responsável pela venda de produtos alimentícios.                     |
 
 ## 2. Event Storming
 
