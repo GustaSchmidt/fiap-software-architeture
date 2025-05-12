@@ -68,5 +68,15 @@ docker-compose up --build
 docker-compose exec app bash
 ```
 
+## 🚀 Cagou com o DB e precisa reiniciar?
+
+```bash
+# Para acessar o container pra casos de debug
+docker-compose exec app bash
+
+# Limpar db
+php artisan migrate:fresh --seed --force
+```
+
 Acessar o projeto localmente
 [http://localhost:8989](http://localhost:8989)
