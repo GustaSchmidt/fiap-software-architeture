@@ -15,4 +15,8 @@ class LojaRepository implements LojaRepositoryInterface
             'endereco' => $lojaEntity->endereco,
         ]);
     }
+    public function findByName(string $nome): array
+    {
+        return Loja::where('nome', 'like', "%{$nome}%")->get()->toArray();
+    }
 }

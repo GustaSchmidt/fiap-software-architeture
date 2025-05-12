@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLojaRequest;
+use App\Http\Requests\SearchLojaRequest;
 use App\Services\LojaService;
 use Illuminate\Http\JsonResponse;
 
@@ -19,5 +20,11 @@ class LojaController extends Controller
             'message' => 'Loja criada com sucesso!',
             'data' => $loja,
         ], 201);
+    }
+    public function search(SearchLojaRequest $request)
+    {
+        $nome = $request->input('nome');
+        $lojas = $this->lojaService->searchByName($nome);
+        return response()->json($lojas);
     }
 }

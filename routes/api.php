@@ -25,6 +25,8 @@ Route::delete('/client/delete', [ClientController::class, 'delete']);
 # Loja
 Route::post('/loja/create', [LojaController::class, 'store']);
 
+Route::post('/loja/search', [LojaController::class, 'search']);
+
 # Products
 Route::post('/product/create', [ProductController::class, 'create']);
 

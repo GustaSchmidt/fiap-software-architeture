@@ -42,14 +42,7 @@ Este projeto tem como objetivo desenvolver o backend de um sistema de autoatendi
 
 ## 📦 Endpoints da API
 
-- `POST /clientes` – Cadastro de cliente
-- `GET /clientes/:cpf` – Identificação de cliente via CPF
-- `POST /produtos` – Cadastro de produto
-- `PUT /produtos/:id` – Edição de produto
-- `DELETE /produtos/:id` – Remoção de produto
-- `GET /produtos?categoria=...` – Listagem de produtos por categoria
-- `POST /checkout` – Finalização de pedido (envio à fila)
-- `GET /pedidos` – Listagem de pedidos
+Endpoints documentados em swagger no /public/swagger.json
 
 ## 🚀 Como Executar o Projeto Localmente
 
@@ -61,8 +54,8 @@ Este projeto tem como objetivo desenvolver o backend de um sistema de autoatendi
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/seu-repo.git
-cd seu-repo
+git clone https://github.com/GustaSchmidt/fiap-software-architeture.git
+cd fiap-software-architeture
 
 # Crie o Arquivo .env
 # Atualize as variáveis de ambiente do arquivo .env de acordo com seu ambiente
@@ -70,18 +63,6 @@ cp .env.example .env
 
 # Suba os containers do projeto
 docker-compose up --build
-
-# Acessar o container
-docker-compose exec app bash
-
-# Instalar as dependências do projeto
-composer install
-
-# Gerar a key do projeto Laravel
-php artisan key:generate
-
-# Execultar as migrations
-php artisan migrate:fresh --seed
 ```
 
 Acessar o projeto localmente

@@ -252,6 +252,49 @@
         }
       }
     },
+    "/api/loja/search": {
+      "post": {
+        "tags": ["Loja"],
+        "summary": "Buscar lojas",
+        "description": "Busca lojas cadastradas com base no nome.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["nome"],
+              "properties": {
+                "nome": {
+                  "type": "string",
+                  "example": "Centro"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de lojas encontradas",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "integer", "example": 1 },
+                  "nome": { "type": "string", "example": "Loja Centro" },
+                  "endereco": { "type": "string", "example": "Rua das Flores, 123" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação"
+          }
+        }
+      }
+    },
     "/api/product/create": {
       "post": {
         "tags": ["Produto"],
