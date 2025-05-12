@@ -26,7 +26,13 @@ php artisan key:generate
 
 # Executa as migrations (remova --seed se não quiser popular)
 echo "Executando migrations e seeders..."
-php artisan migrate:fresh --seed --force
+if [ "$DB_ENV" = "dev" ]; then
+  echo "🔧 Ambiente de desenvolvimento detectado. Limpando e populando o banco de dados..."
+  php artisan migrate:fresh --seed --force
+else
+  echo "🚀 Ambiente de produção detectado. Aplicando apenas as migrations pendentes..."
+  php artisan migrate --force
+fi
 
 # Inicia o PHP-FPM
 echo "Iniciando o PHP-FPM..."
