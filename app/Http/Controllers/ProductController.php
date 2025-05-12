@@ -21,7 +21,7 @@ class ProductController extends Controller
     public function create(StoreProductRequest $request): JsonResponse
     {
         try {
-            $product = $this->service->createProduct($request->validated());
+            $product = $this->productService->createProduct($request->validated());
             return response()->json(['message' => 'Produto criado com sucesso', 'id' => $product->id], 201);
         } catch (ValidationException $e) {
             // Resposta para validação (produto duplicado)

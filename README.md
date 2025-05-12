@@ -63,6 +63,9 @@ cp .env.example .env
 
 # Suba os containers do projeto
 docker-compose up --build
+
+# Para acessar o container pra casos de debug
+docker-compose exec app bash
 ```
 
 Acessar o projeto localmente
