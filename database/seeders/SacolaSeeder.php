@@ -10,13 +10,13 @@ class SacolaSeeder extends Seeder
     public function run(): void
     {
         Sacola::create([
-            'cliente_id' => 1,
+            'client_id' => 1,
             'status' => 'aberta',
             'total' => 0,
         ]);
 
         Sacola::create([
-            'cliente_id' => 2,
+            'client_id' => 2,
             'status' => 'aberta',
             'total' => 0,
         ]);

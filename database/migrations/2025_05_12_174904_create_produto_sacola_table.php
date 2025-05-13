@@ -13,21 +13,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('produto_sacola', function (Blueprint $table) {
-            $table->id(); // Chave primária da tabela de relacionamento
-            $table->unsignedBigInteger('sacola_id'); // Chave estrangeira para a tabela sacolas
-            $table->unsignedBigInteger('produto_id'); // Chave estrangeira para a tabela products
-            $table->integer('quantidade')->default(1); // Quantidade do produto na sacola
-            $table->timestamps(); // Timestamps para created_at e updated_at
+        Schema::create('product_sacola', function (Blueprint $table) {
+            $table->id();
 
-            // Definindo as chaves estrangeiras
-            $table->foreign('sacola_id')->references('id')->on('sacolas')->onDelete('cascade');
-            $table->foreign('produto_id')->references('id')->on('products')->onDelete('cascade');
+            // Cria 'product_id' como unsignedBigInteger + foreign key para 'products'
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
 
-            // Adicionando índices para as chaves estrangeiras
-            $table->index('sacola_id');
-            $table->index('produto_id');
+            // Cria 'sacola_id' como unsignedBigInteger + foreign key para 'sacolas'
+            $table->foreignId('sacola_id')->constrained('sacolas')->onDelete('cascade');
+
+            // Campo de quantidade
+            $table->integer('quantidade')->default(1);
+
+            $table->timestamps();
         });
+
     }
 
     /**

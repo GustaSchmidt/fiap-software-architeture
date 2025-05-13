@@ -5,34 +5,39 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AddItemToSacolaRequest;
 use App\Services\SacolaService;
 use Illuminate\Http\JsonResponse;
+use App\Models\Sacola;
+use App\Models\Client;
 
 class SacolaController extends Controller
 {
-    protected SacolaService $service;
+    public function __construct(private SacolaService $sacolaService) {}
 
-    public function __construct(SacolaService $service)
-    {
-        $this->service = $service;
-    }
-
-    public function add(AddItemToSacolaRequest $request): JsonResponse
+    public function adicionarItem(AddItemToSacolaRequest $request): JsonResponse
     {
         try {
-            // Chama o serviço para adicionar o item à sacola
-            $sacolaId = $this->service->addItemToSacola(
-                $request->input('cliente_id'),
-                $request->input('produto_id'),
-                $request->input('quantidade')
-            );
+            $clienteId = $request->input('client_id');
+            $produtoId = $request->input('produto_id');
+            $quantidade = $request->input('quantidade');
 
-            return response()->json([
-                'message' => 'Item adicionado à sacola',
-                'sacola_id' => $sacolaId,
-            ], 201);
+            // Buscar o cliente
+            $cliente = Client::findOrFail($clienteId);
+
+            // Verificar se o cliente já tem uma sacola ativa, ou criar uma nova
+            $sacola = $cliente->sacolas()->latest()->first();  // Assumindo que a sacola mais recente seja a ativa
+
+            if (!$sacola) {
+                // Criar nova sacola se não houver nenhuma ativa
+                $sacola = $cliente->sacolas()->create();
+            }
+
+            // Chama o serviço para adicionar o item à sacola
+            $this->sacolaService->adicionarItem($sacola->id, $produtoId, $quantidade);
+
+            return response()->json(['mensagem' => 'Item adicionado à sacola com sucesso.']);
         } catch (\Throwable $e) {
             return response()->json([
-                'message' => 'Erro ao adicionar item à sacola',
-                'error' => config('app.debug') ? $e->getMessage() : null,
+                'mensagem' => 'Erro ao adicionar item à sacola',
+                'erro' => $e->getMessage(),
             ], 500);
         }
     }

@@ -6,18 +6,17 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class AddItemToSacolaRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [
-            'cliente_id' => 'required|integer|exists:clients,id',
-            'produto_id' => 'required|integer|exists:products,id',
-            'quantidade' => 'required|integer|min:1',
+            'client_id' => 'required|integer|exists:clients,id',  // Verifica se o cliente existe
+            'produto_id' => 'required|integer|exists:products,id',  // Verifica se o produto existe
+            'quantidade' => 'required|integer|min:1',  // Verifica se a quantidade é válida
         ];
-    }
-
-    public function authorize(): bool
-    {
-        // Se necessário, insira a lógica de autorização aqui.
-        return true;
     }
 }

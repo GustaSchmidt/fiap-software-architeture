@@ -68,7 +68,7 @@ docker-compose up --build
 docker-compose exec app bash
 ```
 
-## 🚀 Cagou com o DB e precisa reiniciar?
+## 🚀 Cagou com o DB e precisa reiniciar? (so para ambiente de DEV)
 
 ```bash
 # Para acessar o container pra casos de debug

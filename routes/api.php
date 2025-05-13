@@ -39,4 +39,4 @@ Route::post('/product/update', [ProductController::class, 'update']);
 Route::delete('/product/delete', [ProductController::class, 'delete']);
 
 # Sacola
-Route::post('/sacola/add', [\App\Http\Controllers\SacolaController::class, 'add']);
+Route::post('/sacola/add', [\App\Http\Controllers\SacolaController::class, 'adicionarItem']);

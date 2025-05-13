@@ -572,9 +572,9 @@
             "required": true,
             "schema": {
               "type": "object",
-              "required": ["cliente_id", "produto_id", "quantidade"],
+              "required": ["client_id", "produto_id", "quantidade"],
               "properties": {
-                "cliente_id": { "type": "integer", "example": 1 },
+                "client_id": { "type": "integer", "example": 1 },
                 "produto_id": { "type": "integer", "example": 2 },
                 "quantidade": { "type": "integer", "example": 1 }
               }
@@ -599,9 +599,9 @@
             "required": true,
             "schema": {
               "type": "object",
-              "required": ["cliente_id", "produto_id"],
+              "required": ["client_id", "produto_id"],
               "properties": {
-                "cliente_id": { "type": "integer", "example": 1 },
+                "client_id": { "type": "integer", "example": 1 },
                 "produto_id": { "type": "integer", "example": 2 }
               }
             }
@@ -625,9 +625,9 @@
             "required": true,
             "schema": {
               "type": "object",
-              "required": ["cliente_id"],
+              "required": ["client_id"],
               "properties": {
-                "cliente_id": { "type": "integer", "example": 1 }
+                "client_id": { "type": "integer", "example": 1 }
               }
             }
           }
