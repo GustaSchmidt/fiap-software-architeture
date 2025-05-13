@@ -57,6 +57,7 @@ class SacolaController extends Controller
     public function listarPorCliente(int $clientId): JsonResponse
     {
         try {
+            $cliente = Client::findOrFail($clientId);
             $sacolas = $this->sacolaRepository->listarPorCliente($clientId);
             return response()->json($sacolas);
         } catch (ModelNotFoundException $e) {
