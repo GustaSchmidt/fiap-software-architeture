@@ -646,6 +646,42 @@
         }
       }
     },
+    "/api/sacola/client/{clientId}": {
+        "get": {
+          "tags": ["Sacola"],
+          "summary": "Lista as sacolas de um cliente",
+          "description": "Retorna todas as sacolas associadas ao cliente especificado por ID.",
+          "parameters": [
+            {
+              "name": "clientId",
+              "in": "path",
+              "required": true,
+              "description": "ID do cliente",
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Lista de sacolas retornada com sucesso",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Sacola"
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Cliente não encontrado"
+            }
+          }
+        }
+      },
     "/api/pedido/list": {
       "post": {
         "tags": ["Pedido"],

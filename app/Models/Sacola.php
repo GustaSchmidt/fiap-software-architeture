@@ -9,10 +9,12 @@ class Sacola extends Model
 {
     protected $table = 'sacolas';
 
-    protected $fillable = ['usuario_id'];
+    protected $fillable = ['client_id', 'status', 'total'];
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class)->withPivot('quantidade');
+        return $this->belongsToMany(Product::class, 'product_sacola')
+            ->withPivot('quantidade')
+            ->withTimestamps();
     }
 }

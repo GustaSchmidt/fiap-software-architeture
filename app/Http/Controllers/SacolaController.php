@@ -2,15 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Repositories\SacolaRepositoryInterface;
 use App\Http\Requests\AddItemToSacolaRequest;
 use App\Services\SacolaService;
 use Illuminate\Http\JsonResponse;
-use App\Models\Sacola;
 use App\Models\Client;
+use App\Domain\Entities\Sacola;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 
 class SacolaController extends Controller
 {
-    public function __construct(private SacolaService $sacolaService) {}
+    private SacolaService $sacolaService;
+    private SacolaRepositoryInterface $sacolaRepository;
+
+    public function __construct(
+        SacolaService $sacolaService,
+        SacolaRepositoryInterface $sacolaRepository
+    ) {
+        $this->sacolaService = $sacolaService;
+        $this->sacolaRepository = $sacolaRepository;
+    }
 
     public function adicionarItem(AddItemToSacolaRequest $request): JsonResponse
     {
@@ -19,24 +31,42 @@ class SacolaController extends Controller
             $produtoId = $request->input('produto_id');
             $quantidade = $request->input('quantidade');
 
-            // Buscar o cliente
             $cliente = Client::findOrFail($clienteId);
 
-            // Verificar se o cliente já tem uma sacola ativa, ou criar uma nova
-            $sacola = $cliente->sacolas()->latest()->first();  // Assumindo que a sacola mais recente seja a ativa
+            $sacolaModel = \App\Models\Sacola::firstOrCreate(
+                ['client_id' => $clienteId, 'status' => 'ativa'],
+                []
+            );
 
-            if (!$sacola) {
-                // Criar nova sacola se não houver nenhuma ativa
-                $sacola = $cliente->sacolas()->create();
-            }
-
-            // Chama o serviço para adicionar o item à sacola
-            $this->sacolaService->adicionarItem($sacola->id, $produtoId, $quantidade);
+            $this->sacolaService->adicionarItem($clienteId, $produtoId, $quantidade);
 
             return response()->json(['mensagem' => 'Item adicionado à sacola com sucesso.']);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'mensagem' => 'Cliente não encontrado.',
+                'erro' => $e->getMessage(),
+            ], 404);
         } catch (\Throwable $e) {
             return response()->json([
                 'mensagem' => 'Erro ao adicionar item à sacola',
+                'erro' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function listarPorCliente(int $clientId): JsonResponse
+    {
+        try {
+            $sacolas = $this->sacolaRepository->listarPorCliente($clientId);
+            return response()->json($sacolas);
+        } catch (ModelNotFoundException $e) {
+             return response()->json([
+                'mensagem' => 'Cliente não encontrado ao tentar listar sacolas.',
+                'erro' => $e->getMessage(),
+            ], 404);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'mensagem' => 'Erro ao listar sacolas do cliente',
                 'erro' => $e->getMessage(),
             ], 500);
         }
