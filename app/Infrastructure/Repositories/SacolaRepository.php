@@ -46,7 +46,6 @@ class SacolaRepository implements SacolaRepositoryInterface
 
     public function listarPorCliente(int $clientId): array
     {
-        // Buscar todas as sacolas do cliente
         $sacolas = Sacola::where('client_id', $clientId)->get();
 
         return $sacolas->map(function ($sacola) {
