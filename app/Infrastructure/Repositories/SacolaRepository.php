@@ -46,22 +46,28 @@ class SacolaRepository implements SacolaRepositoryInterface
 
     public function listarPorCliente(int $clientId): array
     {
-        $sacolas = Sacola::where('client_id', $clientId)->get();
+        $sacola = Sacola::where('client_id', $clientId)->first();
 
-        return $sacolas->map(function ($sacola) {
+        if (!$sacola) {
             return [
-                'id' => $sacola->id,
-                'client_id' => $sacola->client_id,
-                'produtos' => $sacola->products->map(function ($produto) {
-                    return [
-                        'id' => $produto->id,
-                        'nome' => $produto->nome,
-                        'quantidade' => $produto->pivot->quantidade,
-                        'preco' => $produto->preco,
-                    ];
-                }),
-                'total' => $sacola->total,
+                'client_id' => $clientId,
+                'produtos' => [],
+                'valor_total' => 0
             ];
-        })->toArray();
+        }
+
+        return [
+            'client_id' => $sacola->client_id,
+            'produtos' => $sacola->products->map(function ($produto) {
+                return [
+                    'id' => $produto->id,
+                    'nome' => $produto->nome,
+                    'quantidade' => $produto->pivot->quantidade,
+                    'preco' => number_format($produto->preco, 2)
+                ];
+            })->toArray(),
+            'valor_total' => $sacola->total
+        ];
     }
+
 }
