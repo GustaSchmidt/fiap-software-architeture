@@ -21,4 +21,36 @@ class PedidoRepository implements PedidoRepositoryInterface
         $pedido->id = $model->id;
         return $pedido;
     }
+
+    public function buscarPorLojaEFiltro(int $lojaId, array $filtros): array
+    {
+        $query = Pedido::whereHas('sacola.products', function ($q) use ($lojaId) {
+            $q->where('loja_id', $lojaId);
+        });
+
+        if (!empty($filtros['client_id'])) {
+            $query->where('client_id', $filtros['client_id']);
+        }
+
+        if (!empty($filtros['status'])) {
+            $query->where('status', $filtros['status']);
+        }
+
+        return $query->with('sacola.products')->get()->map(function ($pedido) {
+            return [
+                'pedido_id' => $pedido->id,
+                'cliente_id' => $pedido->client_id,
+                'status' => $pedido->status,
+                'total' => $pedido->total,
+                'produtos' => $pedido->sacola->products->map(function ($produto) {
+                    return [
+                        'id' => $produto->id,
+                        'nome' => $produto->nome,
+                        'quantidade' => $produto->pivot->quantidade,
+                        'preco' => $produto->preco,
+                    ];
+                })
+            ];
+        })->toArray();
+    }
 }

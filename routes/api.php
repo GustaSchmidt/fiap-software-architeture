@@ -6,6 +6,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\LojaController;
 use App\Http\Controllers\SacolaController;
+use App\Http\Controllers\PedidoController;
 
 // Rota pública simples para verificar o status da API
 Route::get('/status', function () {
@@ -47,3 +48,5 @@ Route::get('/sacola/client/{clientId}', [SacolaController::class, 'listarPorClie
 Route::post('/sacola/remove', [SacolaController::class, 'remove']);
 
 Route::post('/sacola/checkout', [\App\Http\Controllers\SacolaController::class, 'checkout']);
+
+Route::post('/pedido/list', [PedidoController::class, 'list']);
