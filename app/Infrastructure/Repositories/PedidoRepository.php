@@ -53,4 +53,22 @@ class PedidoRepository implements PedidoRepositoryInterface
             ];
         })->toArray();
     }
+    
+    public function findById(int $id): ?DomainPedido
+    {
+        $pedido = Pedido::find($id);
+
+        if (!$pedido) {
+            return null;
+        }
+
+        return new DomainPedido(
+            $pedido->id,
+            $pedido->client_id,
+            $pedido->sacola_id,
+            $pedido->status,
+            $pedido->total,
+            $pedido->mercado_pago_id
+        );
+    }
 }

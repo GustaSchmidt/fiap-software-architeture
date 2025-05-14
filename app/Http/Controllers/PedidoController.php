@@ -25,4 +25,21 @@ class PedidoController extends Controller
             ], 500);
         }
     }
+    
+    public function status(int $id): JsonResponse
+    {
+        try {
+            $status = $this->service->getStatus($id);
+
+            return response()->json([
+                'pedido_id' => $id,
+                'status' => $status
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'mensagem' => 'Erro ao consultar status do pedido',
+                'erro' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }
