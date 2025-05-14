@@ -60,7 +60,7 @@ class SacolaRepository implements SacolaRepositoryInterface
             'client_id' => $sacola->client_id,
             'produtos' => $sacola->products->map(function ($produto) {
                 return [
-                    'id' => $produto->id,
+                    'id_produto' => $produto->id,
                     'nome' => $produto->nome,
                     'quantidade' => $produto->pivot->quantidade,
                     'preco' => number_format($produto->preco, 2)
