@@ -4,8 +4,9 @@ namespace App\Infrastructure\Repositories;
 use App\Domain\Repositories\SacolaRepositoryInterface;
 use App\Models\Sacola;
 use App\Models\Product;
+use App\Models\Pedido;
 use Illuminate\Support\Facades\Log;
-
+use App\Adapters\Gateways\MercadoPagoClient;
 
 class SacolaRepository implements SacolaRepositoryInterface
 {
@@ -43,10 +44,11 @@ class SacolaRepository implements SacolaRepositoryInterface
         $sacola->save();
     }
 
-
     public function listarPorCliente(int $clientId): array
     {
-        $sacola = Sacola::where('client_id', $clientId)->first();
+        $sacola = Sacola::where('client_id', $clientId)
+            ->where('status', '!=', 'em_pagamento')
+            ->first();
 
         if (!$sacola) {
             return [
@@ -85,4 +87,29 @@ class SacolaRepository implements SacolaRepositoryInterface
         }
     }
 
+    public function checkout(int $clientId): array
+    {
+        $sacola = Sacola::where('client_id', $clientId)->where('status', 'aberta')->firstOrFail();
+        $mercadoPago = new MercadoPagoClient();
+
+        $pagamento = $mercadoPago->criarPagamentoPix($sacola->total, "Pagamento Sacola #{$sacola->id}");
+
+        $pedido = Pedido::create([
+            'client_id' => $clientId,
+            'sacola_id' => $sacola->id,
+            'status' => 'aguardando_pagamento',
+            'total' => $sacola->total,
+            'mercado_pago_id' => $pagamento['id'],
+        ]);
+
+        $sacola->status = 'em_pagamento';
+        $sacola->save();
+
+        return [
+            'pedido_id' => $pedido->id,
+            'qr_code' => $pagamento['qr_code_base64'],
+            'status' => $pedido->status,
+            'valor' => $pedido->total,
+        ];
+    }
 }

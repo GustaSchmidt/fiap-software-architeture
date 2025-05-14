@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Domain\Entities\Sacola;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Http\Requests\RemoveItemFromSacolaRequest;
+use App\Http\Requests\CheckoutSacolaRequest;
 
 class SacolaController extends Controller
 {
@@ -85,6 +86,23 @@ class SacolaController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'mensagem' => 'Erro ao remover item da sacola',
+                'erro' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function checkout(CheckoutSacolaRequest $request): JsonResponse
+    {
+        try {
+            $data = $this->sacolaService->checkout($request->input('client_id'));
+
+            return response()->json([
+                'mensagem' => 'Checkout realizado com sucesso',
+                'pedido' => $data
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'mensagem' => 'Erro ao processar checkout',
                 'erro' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }

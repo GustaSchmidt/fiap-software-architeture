@@ -16,5 +16,9 @@ class SacolaService
     {
         $this->sacolaRepository->removerItem($clientId, $produtoId);
     }
+    public function checkout(int $clientId): array
+    {
+        return $this->sacolaRepository->checkout($clientId);
+    }
 
 }

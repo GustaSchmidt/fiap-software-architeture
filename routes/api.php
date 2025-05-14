@@ -45,3 +45,5 @@ Route::post('/sacola/add', [SacolaController::class, 'adicionarItem']);
 Route::get('/sacola/client/{clientId}', [SacolaController::class, 'listarPorCliente']);
 
 Route::post('/sacola/remove', [SacolaController::class, 'remove']);
+
+Route::post('/sacola/checkout', [\App\Http\Controllers\SacolaController::class, 'checkout']);
