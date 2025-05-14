@@ -43,3 +43,5 @@ Route::delete('/product/delete', [ProductController::class, 'delete']);
 Route::post('/sacola/add', [SacolaController::class, 'adicionarItem']);
 
 Route::get('/sacola/client/{clientId}', [SacolaController::class, 'listarPorCliente']);
+
+Route::post('/sacola/remove', [SacolaController::class, 'remove']);

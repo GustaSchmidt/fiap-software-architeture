@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 use App\Models\Client;
 use App\Domain\Entities\Sacola;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use App\Http\Requests\RemoveItemFromSacolaRequest;
 
 class SacolaController extends Controller
 {
@@ -72,4 +72,22 @@ class SacolaController extends Controller
             ], 500);
         }
     }
+
+    public function remove(RemoveItemFromSacolaRequest $request): JsonResponse
+    {
+        try {
+            $this->sacolaService->removerItem(
+                $request->input('client_id'),
+                $request->input('produto_id')
+            );
+
+            return response()->json(['mensagem' => 'Item removido com sucesso']);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'mensagem' => 'Erro ao remover item da sacola',
+                'erro' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
 }

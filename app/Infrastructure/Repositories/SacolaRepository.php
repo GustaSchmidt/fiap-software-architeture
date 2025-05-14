@@ -69,5 +69,20 @@ class SacolaRepository implements SacolaRepositoryInterface
             'valor_total' => $sacola->total
         ];
     }
+    public function removerItem(int $clientId, int $produtoId): void
+    {
+        $sacola = Sacola::where('client_id', $clientId)->firstOrFail();
+
+        $produto = $sacola->products()->where('product_id', $produtoId)->first();
+
+        if ($produto) {
+            $totalRemovido = $produto->preco * $produto->pivot->quantidade;
+            $sacola->products()->detach($produtoId);
+            $sacola->total -= $totalRemovido;
+            $sacola->save();
+        }else{
+            throw new \Exception("Produto não encontrado na sacola do cliente.");
+        }
+    }
 
 }

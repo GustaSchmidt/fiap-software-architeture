@@ -12,4 +12,9 @@ class SacolaService
     {
         $this->sacolaRepository->adicionarItem($clienteId, $produtoId, $quantidade);
     }
+    public function removerItem(int $clientId, int $produtoId): void
+    {
+        $this->sacolaRepository->removerItem($clientId, $produtoId);
+    }
+
 }
