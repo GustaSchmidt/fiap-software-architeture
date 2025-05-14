@@ -17,8 +17,7 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             LojaSeeder::class,
             ProductSeeder::class,
-            SacolaSeeder::class,
-            ProdutoSacolaSeeder::class,
+            SacolaSeeder::class
         ]);
     }
 

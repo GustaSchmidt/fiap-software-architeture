@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\LojaController;
+use App\Http\Controllers\SacolaController;
 
 // Rota pública simples para verificar o status da API
 Route::get('/status', function () {
@@ -39,4 +40,10 @@ Route::post('/product/update', [ProductController::class, 'update']);
 Route::delete('/product/delete', [ProductController::class, 'delete']);
 
 # Sacola
-Route::post('/sacola/add', [\App\Http\Controllers\SacolaController::class, 'add']);
+Route::post('/sacola/add', [SacolaController::class, 'adicionarItem']);
+
+Route::get('/sacola/client/{clientId}', [SacolaController::class, 'listarPorCliente']);
+
+Route::post('/sacola/remove', [SacolaController::class, 'remove']);
+
+Route::post('/sacola/checkout', [\App\Http\Controllers\SacolaController::class, 'checkout']);

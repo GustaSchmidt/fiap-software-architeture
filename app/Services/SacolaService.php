@@ -6,16 +6,19 @@ use App\Domain\Repositories\SacolaRepositoryInterface;
 
 class SacolaService
 {
-    protected SacolaRepositoryInterface $repository;
+    public function __construct(private SacolaRepositoryInterface $sacolaRepository) {}
 
-    public function __construct(SacolaRepositoryInterface $repository)
+    public function adicionarItem(int $clienteId, int $produtoId, int $quantidade): void
     {
-        $this->repository = $repository;
+        $this->sacolaRepository->adicionarItem($clienteId, $produtoId, $quantidade);
+    }
+    public function removerItem(int $clientId, int $produtoId): void
+    {
+        $this->sacolaRepository->removerItem($clientId, $produtoId);
+    }
+    public function checkout(int $clientId): array
+    {
+        return $this->sacolaRepository->checkout($clientId);
     }
 
-    public function addItemToSacola(int $clienteId, int $produtoId, int $quantidade): int
-    {
-        // Lógica para adicionar o item à sacola
-        return $this->repository->addItem($clienteId, $produtoId, $quantidade);
-    }
 }

@@ -4,21 +4,33 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Sacola;
+use App\Models\Client;
+use App\Models\Product;
 
 class SacolaSeeder extends Seeder
 {
     public function run(): void
     {
-        Sacola::create([
-            'cliente_id' => 1,
-            'status' => 'aberta',
-            'total' => 0,
-        ]);
+        // Busca todos os clientes
+        $clientes = Client::all();
+        $produto = Product::first(); // Usa o primeiro produto como exemplo
 
-        Sacola::create([
-            'cliente_id' => 2,
-            'status' => 'aberta',
-            'total' => 0,
-        ]);
+        foreach ($clientes as $cliente) {
+            // Cria uma sacola para o cliente se ele não tiver
+            $sacola = Sacola::create([
+                'client_id' => $cliente->id,
+                'status' => 'aberta',
+                'total' => 0,
+            ]);
+
+            if ($produto) {
+                // Adiciona o produto à sacola com quantidade 1
+                $sacola->products()->attach($produto->id, ['quantidade' => 1]);
+
+                // Atualiza o total
+                $sacola->total = $produto->preco;
+                $sacola->save();
+            }
+        }
     }
 }

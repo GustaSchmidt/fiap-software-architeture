@@ -1,11 +1,10 @@
 FROM php:8.3-fpm
 
-# set your user name, ex: user=carlos
-ARG user=yourusername
+ARG user=foodeliveryapi
 ARG uid=1000
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Instalar dependências do sistema + extensões do PHP
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     libpng-dev \
@@ -13,35 +12,31 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    netcat-traditional
+    netcat-traditional \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
-
-# Get latest Composer
+# Copiar Composer (usando imagem oficial como base)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Create system user to run Composer and Artisan Commands
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user
+# Criar usuário de sistema
+RUN useradd -u ${uid} -G www-data,root -d /home/${user} -m ${user} \
+    && mkdir -p /home/${user}/.composer \
+    && chown -R ${user}:${user} /home/${user}
 
-# Install redis
-RUN pecl install -o -f redis \
-    &&  rm -rf /tmp/pear \
-    &&  docker-php-ext-enable redis
-
-# Set working directory
+# Definir diretório de trabalho
 WORKDIR /var/www
 
-# Copy custom configurations PHP
+# Copiar configurações personalizadas
 COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
 
+# Entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-USER $user
+# Trocar para o usuário não root
+USER ${user}
