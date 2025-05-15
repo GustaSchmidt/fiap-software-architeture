@@ -52,3 +52,5 @@ Route::post('/sacola/checkout', [\App\Http\Controllers\SacolaController::class, 
 Route::post('/pedido/list', [PedidoController::class, 'list']);
 
 Route::get('/pedido/status/{id}', [PedidoController::class, 'status']);
+
+Route::post('/pedido/status/{id}', [PedidoController::class, 'updatePedido']);

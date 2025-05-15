@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ListPedidoRequest;
+use App\Http\Requests\UpdatePedidoStatusRequest;
 use App\Services\PedidoService;
 use Illuminate\Http\JsonResponse;
 
@@ -42,4 +43,24 @@ class PedidoController extends Controller
             ], 500);
         }
     }
+
+    public function updatePedido(UpdatePedidoStatusRequest $request, int $id): JsonResponse
+    {
+        try{
+            $pedido = $this->service->updatePedido(
+                $id,
+                $request->input('status')
+            );
+            return response()->json([
+                'mensagem' => 'Status do pedido atualizado com sucesso',
+                'pedido' => $pedido
+            ]);
+        }catch (\Throwable $e) {
+            return response()->json([
+                'mensagem' => 'Erro ao consultar status do pedido',
+                'erro' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }
+ 

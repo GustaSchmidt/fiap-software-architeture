@@ -9,4 +9,5 @@ interface PedidoRepositoryInterface
     public function criar(Pedido $pedido): Pedido;
     public function buscarPorLojaEFiltro(int $lojaId, array $filtros): array;
     public function findById(int $id): ?Pedido;
+    public function updateStatus(int $id, string $status): ?Pedido;
 }

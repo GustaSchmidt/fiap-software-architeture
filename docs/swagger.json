@@ -1110,6 +1110,63 @@
           "404": { "description": "Pedido não encontrado" },
           "500": { "description": "Erro interno no servidor" }
         }
+      },
+      "post": {
+        "tags": ["Pedido"],
+        "summary": "Atualizar status do pedido",
+        "description": "Atualiza o status de um pedido existente. O status só pode ser alterado se a sacola vinculada estiver com status 'pago'.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID do pedido"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["status"],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["preparando", "pronto", "entregue"],
+                  "example": "pronto"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status atualizado com sucesso",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "mensagem": {
+                  "type": "string",
+                  "example": "Status atualizado com sucesso"
+                },
+                "pedido": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer", "example": 1 },
+                    "status": { "type": "string", "example": "pronto" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou pré-condição não atendida (ex: sacola não paga)"
+          },
+          "500": {
+            "description": "Erro interno no servidor"
+          }
+        }
       }
     }
     

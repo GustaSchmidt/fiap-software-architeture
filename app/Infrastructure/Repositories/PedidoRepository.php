@@ -71,4 +71,25 @@ class PedidoRepository implements PedidoRepositoryInterface
             $pedido->mercado_pago_id
         );
     }
+
+    public function updateStatus(int $id, string $status): ?DomainPedido
+    {
+        $pedido = Pedido::find($id);
+
+        if (!$pedido) {
+            return null;
+        }
+
+        $pedido->status = $status;
+        $pedido->save();
+
+        return new DomainPedido(
+            $pedido->id,
+            $pedido->client_id,
+            $pedido->sacola_id,
+            $pedido->status,
+            $pedido->total,
+            $pedido->mercado_pago_id
+        );
+    }
 }

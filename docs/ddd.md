@@ -109,3 +109,8 @@
         I --> J[Finalizar Entrega]
         J --> K[Pedido Finalizado]
 ```
+
+### Status da sacola
+
+aberta -> em_pagamento -> pago -> fechada;
+
