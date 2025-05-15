@@ -11,6 +11,8 @@ use App\Domain\Repositories\LojaRepositoryInterface;
 use App\Infrastructure\Repositories\LojaRepository;
 use App\Domain\Repositories\SacolaRepositoryInterface;
 use App\Infrastructure\Repositories\SacolaRepository;
+use App\Domain\Repositories\PedidoRepositoryInterface;
+use App\Infrastructure\Repositories\PedidoRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LojaRepositoryInterface::class, LojaRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
         $this->app->bind(SacolaRepositoryInterface::class, SacolaRepository::class);
+        $this->app->bind(PedidoRepositoryInterface::class, PedidoRepository::class);
     }
 
     /**

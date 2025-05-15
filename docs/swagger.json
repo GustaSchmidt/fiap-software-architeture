@@ -1076,75 +1076,65 @@
         }
       }
     },
-    "/api/pedido/status": {
+    "/api/pedido/status/{id}": {
       "get": {
-        "tags": [
-          "Pedido"
-        ],
-        "summary": "Consultar status de um pedido",
-        "description": "Consulta o status atual de um pedido.",
+        "tags": ["Pedido"],
+        "summary": "Consultar status do pedido",
+        "description": "Retorna o status atual de um pedido pelo ID.",
         "parameters": [
           {
-            "name": "pedido_id",
-            "in": "query",
+            "name": "id",
+            "in": "path",
             "required": true,
-            "type": "integer"
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Status do pedido",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "pedido_id": {
-                  "type": "integer",
-                  "example": 123
-                },
-                "status": {
-                  "type": "string",
-                  "example": "em_preparacao"
+            "description": "Status do pedido retornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pedido_id": { "type": "integer", "example": 1 },
+                    "status": { "type": "string", "example": "pago" }
+                  }
                 }
               }
             }
           },
-          "404": {
-            "description": "Pedido não encontrado"
-          }
+          "404": { "description": "Pedido não encontrado" },
+          "500": { "description": "Erro interno no servidor" }
         }
       },
       "post": {
-        "tags": [
-          "Pedido"
-        ],
-        "summary": "Atualizar status de um pedido",
-        "description": "Atualiza o status de um pedido existente.",
+        "tags": ["Pedido"],
+        "summary": "Atualizar status do pedido",
+        "description": "Atualiza o status de um pedido existente. O status só pode ser alterado se a sacola vinculada estiver com status 'pago'.",
         "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID do pedido"
+          },
           {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "type": "object",
-              "required": [
-                "pedido_id",
-                "status"
-              ],
+              "required": ["status"],
               "properties": {
-                "pedido_id": {
-                  "type": "integer",
-                  "example": 123
-                },
                 "status": {
                   "type": "string",
-                  "example": "em_preparacao",
-                  "enum": [
-                    "pendente",
-                    "pago",
-                    "cancelado",
-                    "em_preparacao",
-                    "entregue"
-                  ]
+                  "enum": ["preparando", "pronto", "entregue"],
+                  "example": "pronto"
                 }
               }
             }
@@ -1152,13 +1142,33 @@
         ],
         "responses": {
           "200": {
-            "description": "Status atualizado com sucesso"
+            "description": "Status atualizado com sucesso",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "mensagem": {
+                  "type": "string",
+                  "example": "Status atualizado com sucesso"
+                },
+                "pedido": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer", "example": 1 },
+                    "status": { "type": "string", "example": "pronto" }
+                  }
+                }
+              }
+            }
           },
-          "404": {
-            "description": "Pedido não encontrado"
+          "400": {
+            "description": "Erro de validação ou pré-condição não atendida (ex: sacola não paga)"
+          },
+          "500": {
+            "description": "Erro interno no servidor"
           }
         }
       }
     }
+    
   }
 }

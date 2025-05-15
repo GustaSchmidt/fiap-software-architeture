@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Entities\Sacola;
 use App\Domain\Repositories\SacolaRepositoryInterface;
 
 class SacolaService
@@ -12,13 +13,24 @@ class SacolaService
     {
         $this->sacolaRepository->adicionarItem($clienteId, $produtoId, $quantidade);
     }
+
     public function removerItem(int $clientId, int $produtoId): void
     {
         $this->sacolaRepository->removerItem($clientId, $produtoId);
     }
+
     public function checkout(int $clientId): array
     {
         return $this->sacolaRepository->checkout($clientId);
     }
 
+    public function findById(int $sacolaId): Sacola
+    {
+        return $this->sacolaRepository->findById($sacolaId);
+    }
+
+    public function fecharSacola(int $clienteId): void
+    {
+        $this->sacolaRepository->fecharSacola($clienteId);
+    }
 }
