@@ -111,11 +111,43 @@
           "200": {
             "description": "Cliente encontrado",
             "schema": {
-              "$ref": "#/definitions/Client"
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "nome": {
+                  "type": "string",
+                  "example": "João"
+                },
+                "sobrenome": {
+                  "type": "string",
+                  "example": "Silva"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "example": "joao@example.com"
+                },
+                "cpf": {
+                  "type": "string",
+                  "example": "404.562.410-43"
+                }
+              }
             }
           },
           "404": {
-            "description": "Cliente não encontrado"
+            "description": "Cliente não encontrado",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "mensage": {
+                  "type": "string",
+                  "example": "Cliente não encontrado"
+                }
+              }
+            }
           }
         }
       }
