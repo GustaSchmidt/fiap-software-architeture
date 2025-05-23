@@ -11,7 +11,7 @@ class DeleteClientTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function deve_deletar_cliente_quando_id_existir()
     {
         $client = Client::create([
@@ -34,7 +34,7 @@ class DeleteClientTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function deve_retornar_404_quando_cliente_nao_existir()
     {
         $response = $this->deleteJson('/api/client/delete?id=999999');

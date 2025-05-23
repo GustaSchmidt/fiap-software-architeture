@@ -8,7 +8,7 @@ use App\Models\Client;
 use PHPUnit\Framework\Attributes\Test;
 
 
-class ClientControllerTest extends TestCase
+class SearchClientTest extends TestCase
 {
     use RefreshDatabase;
 
