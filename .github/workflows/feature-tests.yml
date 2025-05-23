@@ -1,0 +1,38 @@
+name: Run Laravel Tests
+
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Compose
+        run: |
+          cp .env.example .env
+          docker compose up --build
+
+      - name: Wait for app to be ready
+        run: |
+          timeout 180 bash -c "
+            until docker compose logs app | grep -q 'ready to handle connections'; do
+              echo 'Waiting for app to be ready...'
+              docker compose logs app
+              sleep 10
+            done
+          "
+
+      - name: Run tests
+        run: docker compose exec -T app php artisan test
+
+      - name: Shutdown containers
+        if: always()
+        run: docker compose down

@@ -85,13 +85,13 @@ class ClientController extends Controller
         $id = (int) $request->query('id');
 
         if (!$id) {
-            return response()->json(['error' => 'ID é obrigatório'], 400);
+            return response()->json(['message' => 'ID é obrigatório'], 400);
         }
 
         $deleted = $this->service->deleteClient($id);
 
         if (!$deleted) {
-            return response()->json(['error' => 'Cliente não encontrado'], 404);
+            return response()->json(['message' => 'Cliente não encontrado'], 404);
         }
 
         return response()->json(['message' => 'Cliente deletado com sucesso']);
