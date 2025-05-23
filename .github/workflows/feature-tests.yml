@@ -25,6 +25,7 @@ jobs:
           timeout 180 bash -c "
             until docker compose logs app | grep -q 'ready to handle connections'; do
               echo 'Waiting for app to be ready...'
+              docker compose logs app
               sleep 10
             done
           "
