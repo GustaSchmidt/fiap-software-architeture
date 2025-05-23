@@ -29,11 +29,6 @@ jobs:
           --health-retries=3
 
     steps:
-     obs:
-  laravel-tests:
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
