@@ -39,5 +39,6 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Trocar para o usuário não root
+RUN chown -R ${user}:${user} /var/www
 USER ${user}
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

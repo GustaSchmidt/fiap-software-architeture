@@ -18,7 +18,7 @@ jobs:
       - name: Set up Docker Compose
         run: |
           cp .env.example .env
-          docker compose up -d --build
+          docker compose up --build
 
       - name: Wait for app to be ready
         run: |
