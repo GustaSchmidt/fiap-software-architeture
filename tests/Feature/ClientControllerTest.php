@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\Client;
+use PHPUnit\Framework\Attributes\Test;
 
-class ClientControllerTest extends TestCase
+
+class SearchClientControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test sucess */
+    #[Test]
     public function deve_retornar_cliente_quando_id_existir()
     {
         $client = Client::create([
@@ -33,7 +35,7 @@ class ClientControllerTest extends TestCase
                  ]);
     }
 
-    /** @test error */
+    #[Test]
     public function deve_retornar_404_quando_cliente_nao_existir()
     {
         $response = $this->getJson('/api/client/999');

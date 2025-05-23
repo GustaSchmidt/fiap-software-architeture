@@ -8,24 +8,22 @@ use App\Models\Client;
 use PHPUnit\Framework\Attributes\Test;
 
 
-class SearchClientByCpfTest extends TestCase
+class ClientControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     #[Test]
-    public function deve_retornar_cliente_quando_cpf_existir()
+    public function deve_retornar_cliente_quando_id_existir()
     {
         $client = Client::create([
             'nome' => 'Gustavo',
             'sobrenome' => 'Schmidt',
             'email' => 'gustavo.schmidt@example.com',
-            'cpf' => '404.562.410-43',
+            'cpf' => '688.537.450-45',
             'senha' => bcrypt('senha123'),
         ]);
 
-        $response = $this->postJson('/api/client/search_cpf', [
-            'cpf' => '404.562.410-43',
-        ]);
+        $response = $this->getJson("/api/client/{$client->id}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -33,21 +31,18 @@ class SearchClientByCpfTest extends TestCase
                      'nome' => 'Gustavo',
                      'sobrenome' => 'Schmidt',
                      'email' => 'gustavo.schmidt@example.com',
-                     'cpf' => '404.562.410-43',
+                     'cpf' => '688.537.450-45',
                  ]);
     }
 
     #[Test]
-    public function deve_retornar_404_quando_cpf_nao_existir()
+    public function deve_retornar_404_quando_cliente_nao_existir()
     {
-        $response = $this->postJson('/api/client/search_cpf', [
-            'cpf' => '894.673.080-37', // CPF válido mas não existe
-        ]);
+        $response = $this->getJson('/api/client/999');
 
         $response->assertStatus(404)
-                ->assertJson([
-                    'message' => 'Cliente não encontrado',
-                ]);
+                 ->assertJson([
+                     'message' => 'Cliente não encontrado',
+                 ]);
     }
-
 }
