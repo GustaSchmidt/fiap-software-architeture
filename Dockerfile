@@ -33,10 +33,11 @@ WORKDIR /var/www
 # Copiar configurações personalizadas
 COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
 
+
 # Entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Trocar para o usuário não root
 USER ${user}
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

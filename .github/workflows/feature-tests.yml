@@ -20,9 +20,14 @@ jobs:
           cp .env.example .env
           docker compose up -d --build
 
-      - name: Wait migrations
+      - name: Wait for app to be ready
         run: |
-          docker compose exec -T app bash -c 'until php artisan migrate --force; do sleep 2; done'
+          timeout 180 bash -c "
+            until docker compose logs app | grep -q 'ready to handle connections'; do
+              echo 'Waiting for app to be ready...'
+              sleep 10
+            done
+          "
 
       - name: Run tests
         run: docker compose exec -T app php artisan test
