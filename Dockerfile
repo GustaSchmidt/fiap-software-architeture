@@ -40,5 +40,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Trocar para o usuário não root
 RUN chown -R ${user}:${user} /var/www
+RUN mkdir -p /var/www/vendor \
+    && chown -R ${user}:${user} /var/www
 USER ${user}
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
