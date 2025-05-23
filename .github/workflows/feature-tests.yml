@@ -18,7 +18,11 @@ jobs:
       - name: Set up Docker Compose
         run: |
           cp .env.example .env
-          docker compose exec -T app bash -c 'until php artisan migrate --force; do sleep 15; done'
+          docker compose up -d --build
+
+      - name: Wait migrations
+        run: |
+          docker compose exec -T app bash -c 'until php artisan migrate --force; do sleep 2; done'
 
       - name: Run tests
         run: docker compose exec -T app php artisan test
