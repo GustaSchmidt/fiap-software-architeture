@@ -62,8 +62,11 @@ class CreateProductTest extends TestCase
         ];
 
         // Cria os produtos via endpoint
-        $this->postJson('/api/product/create', $produtoConfeitaria);
-        $this->postJson('/api/product/create', $produtoBebida);
+        $headers = $this->getApiAuthHeaders();
+        $this->withHeaders($headers)
+             ->postJson('/api/product/create', $produtoConfeitaria);
+        $this->withHeaders($headers)
+             ->postJson('/api/product/create', $produtoBebida);
 
         // Executa a busca filtrando por categoria "Bebidas"
         $response = $this->postJson('/api/product/category_list?categoria=Bebidas');

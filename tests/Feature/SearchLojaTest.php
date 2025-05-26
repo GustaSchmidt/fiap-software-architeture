@@ -18,8 +18,10 @@ class SearchLojaTest extends TestCase
         Loja::create(['nome' => 'Loja Centro', 'endereco' => 'Rua das Flores, 123']);
         Loja::create(['nome' => 'Loja Sul', 'endereco' => 'Avenida Brasil, 456']);
         Loja::create(['nome' => 'Centro Comercial', 'endereco' => 'Praça Central, 789']);
-
-        $response = $this->postJson('/api/loja/search', [
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->postJson('/api/loja/search', [
             'nome' => 'Centro',
         ]);
 

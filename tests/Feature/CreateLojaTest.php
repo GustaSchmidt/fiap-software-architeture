@@ -18,8 +18,9 @@ class CreateLojaTest extends TestCase
             'nome' => 'Loja Centro',
             'endereco' => 'Rua das Flores, 123',
         ];
-
-        $response = $this->postJson('/api/loja/create', $payload);
+        $headers = $this->getApiAuthHeaders();
+        $response = $this->withHeaders($headers)
+                         ->postJson('/api/loja/create', $payload);
 
         $response->assertStatus(201)
                 ->assertJsonStructure([

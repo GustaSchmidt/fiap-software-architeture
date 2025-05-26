@@ -21,8 +21,10 @@ class UpdateClientTest extends TestCase
             'cpf' => '688.537.450-45',
             'senha' => bcrypt('senha123'),
         ]);
-
-        $response = $this->postJson('/api/client/update', [
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->postJson('/api/client/update', [
             'id' => $client->id,
             'nome' => 'Maria Atualizada',
             'sobrenome' => 'Oliveira',
