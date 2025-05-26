@@ -24,7 +24,8 @@ class SearchProductTest extends TestCase
         ]);
 
     }
-
+    
+    #[Test]
     public function deve_retornar_produto_existente()
     {
         $product = Product::create([
