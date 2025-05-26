@@ -39,8 +39,10 @@ class SearchProductTest extends TestCase
             'loja_id' => $this->loja->id,
         ]);
 
-
-        $response = $this->getJson("/api/product/{$product->id}");
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->getJson("/api/product/{$product->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([

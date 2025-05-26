@@ -13,7 +13,9 @@ class CreateClientTest extends TestCase
     #[Test]
     public function deve_criar_cliente_com_dados_validos()
     {
-        $response = $this->postJson('/api/client/create', [
+        $headers = $this->getApiAuthHeaders();
+        $response = $this->withHeaders($headers)
+                         ->postJson('/api/client/create', [
             'nome' => 'João',
             'sobrenome' => 'Silva',
             'email' => 'joao.silva@example.com',

@@ -21,8 +21,10 @@ class DeleteClientTest extends TestCase
             'cpf' => '123.456.789-00',
             'senha' => bcrypt('senha123'),
         ]);
-
-        $response = $this->deleteJson("/api/client/delete?id={$client->id}");
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->deleteJson("/api/client/delete?id={$client->id}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -37,7 +39,10 @@ class DeleteClientTest extends TestCase
     #[Test]
     public function deve_retornar_404_quando_cliente_nao_existir()
     {
-        $response = $this->deleteJson('/api/client/delete?id=999999');
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->deleteJson('/api/client/delete?id=999999');
 
         $response->assertStatus(404)
                  ->assertJson([

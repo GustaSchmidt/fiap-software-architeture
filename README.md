@@ -80,3 +80,35 @@ php artisan migrate:fresh --seed --force
 
 Acessar o projeto localmente
 [http://localhost:8989](http://localhost:8989)
+
+## 🚀 APIKey como usar essa bagaça
+### Comando Artisan: `apikey:create`
+
+Este comando Artisan permite criar uma nova API Key no sistema com opções personalizadas como nome, role, ID do cliente/loja, e status (ativa ou inativa).
+
+#### Uso
+
+```bash
+php artisan apikey:create "Nome da Integração" [opções]
+```
+
+**Argumentos obrigatórios**
+```bash
+name
+Nome legível para a API Key.
+Exemplo: "Integração Serviço X"
+```
+
+**Opções**
+```bash
+--role ou -r
+Define a role associada à API Key.
+Exemplo: --role=admin
+
+--client-id ou -c
+ID inteiro do cliente ou loja associado à role.
+Exemplo: --client-id=123
+
+--inactive
+Cria a chave como inativa (por padrão, a chave é criada como ativa).
+```

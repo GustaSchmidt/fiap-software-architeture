@@ -22,8 +22,11 @@ class SearchClientControllerTest extends TestCase
             'cpf' => '688.537.450-45',
             'senha' => bcrypt('senha123'),
         ]);
+        
+        $headers = $this->getApiAuthHeaders();
 
-        $response = $this->getJson("/api/client/{$client->id}");
+        $response = $this->withHeaders($headers)
+                         ->getJson("/api/client/{$client->id}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -38,7 +41,9 @@ class SearchClientControllerTest extends TestCase
     #[Test]
     public function deve_retornar_404_quando_cliente_nao_existir()
     {
-        $response = $this->getJson('/api/client/999');
+        $headers = $this->getApiAuthHeaders();
+
+        $response = $this->withHeaders($headers)->getJson('/api/client/999');
 
         $response->assertStatus(404)
                  ->assertJson([

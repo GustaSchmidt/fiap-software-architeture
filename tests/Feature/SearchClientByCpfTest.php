@@ -22,8 +22,10 @@ class SearchClientByCpfTest extends TestCase
             'cpf' => '404.562.410-43',
             'senha' => bcrypt('senha123'),
         ]);
-
-        $response = $this->postJson('/api/client/search_cpf', [
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->postJson('/api/client/search_cpf', [
             'cpf' => '404.562.410-43',
         ]);
 
@@ -40,7 +42,10 @@ class SearchClientByCpfTest extends TestCase
     #[Test]
     public function deve_retornar_404_quando_cpf_nao_existir()
     {
-        $response = $this->postJson('/api/client/search_cpf', [
+        $headers = $this->getApiAuthHeaders();
+        
+        $response = $this->withHeaders($headers)
+                         ->postJson('/api/client/search_cpf', [
             'cpf' => '894.673.080-37', // CPF válido mas não existe
         ]);
 

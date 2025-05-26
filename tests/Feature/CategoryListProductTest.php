@@ -69,8 +69,13 @@ class CategoryListProductTest extends TestCase
         ];
 
         // Criação dos produtos via API
-        $this->postJson('/api/product/create', $produtoBebida)->assertStatus(201);
-        $this->postJson('/api/product/create', $produtoConfeitaria)->assertStatus(201);
+        $headers = $this->getApiAuthHeaders();
+
+        $this->withHeaders($headers)
+             ->postJson('/api/product/create', $produtoBebida)->assertStatus(201);
+
+        $this->withHeaders($headers)
+             ->postJson('/api/product/create', $produtoConfeitaria)->assertStatus(201);
 
         // Act
         $response = $this->postJson('/api/product/category_list?categoria=Bebidas');
