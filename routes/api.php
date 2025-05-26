@@ -14,43 +14,51 @@ Route::get('/status', function () {
 });
 
 # Clients
-Route::get('/client/{id}', [ClientController::class, 'show']);
-
-Route::post('/client/create', [ClientController::class, 'store']);
-
-Route::post('/client/search_cpf', [ClientController::class, 'searchByCpf']);
-
-Route::post('/client/update', [ClientController::class, 'update']);
-
-Route::delete('/client/delete', [ClientController::class, 'delete']);
+Route::middleware('auth.apikey')->group(function () {
+    Route::get('/client/{id}', [ClientController::class, 'show']);
+    
+    Route::post('/client/create', [ClientController::class, 'store']);
+    
+    Route::post('/client/search_cpf', [ClientController::class, 'searchByCpf']);
+    
+    Route::post('/client/update', [ClientController::class, 'update']);
+    
+    Route::delete('/client/delete', [ClientController::class, 'delete']);
+});
 
 # Loja
-Route::post('/loja/create', [LojaController::class, 'store']);
+Route::middleware('auth.apikey')->group(function () {
+    Route::post('/loja/create', [LojaController::class, 'store']);
 
-Route::post('/loja/search', [LojaController::class, 'search']);
+    Route::post('/loja/search', [LojaController::class, 'search']);
+});
 
 # Products
-Route::post('/product/create', [ProductController::class, 'create']);
+Route::middleware('auth.apikey')->group(function () {
+    Route::post('/product/create', [ProductController::class, 'create']);
 
-Route::get('/product/{id}', [ProductController::class, 'show']);
+    Route::get('/product/{id}', [ProductController::class, 'show']);
 
-Route::post('/product/category_list', [ProductController::class, 'listByCategory']);
+    Route::post('/product/category_list', [ProductController::class, 'listByCategory']);
 
-Route::post('/product/update', [ProductController::class, 'update']);
+    Route::post('/product/update', [ProductController::class, 'update']);
 
-Route::delete('/product/delete', [ProductController::class, 'delete']);
+    Route::delete('/product/delete', [ProductController::class, 'delete']);
+});
 
 # Sacola
-Route::post('/sacola/add', [SacolaController::class, 'adicionarItem']);
+Route::middleware('auth.apikey')->group(function () {
+    Route::post('/sacola/add', [SacolaController::class, 'adicionarItem']);
 
-Route::get('/sacola/client/{clientId}', [SacolaController::class, 'listarPorCliente']);
+    Route::get('/sacola/client/{clientId}', [SacolaController::class, 'listarPorCliente']);
 
-Route::post('/sacola/remove', [SacolaController::class, 'remove']);
+    Route::post('/sacola/remove', [SacolaController::class, 'remove']);
 
-Route::post('/sacola/checkout', [\App\Http\Controllers\SacolaController::class, 'checkout']);
+    Route::post('/sacola/checkout', [\App\Http\Controllers\SacolaController::class, 'checkout']);
 
-Route::post('/pedido/list', [PedidoController::class, 'list']);
+    Route::post('/pedido/list', [PedidoController::class, 'list']);
 
-Route::get('/pedido/status/{id}', [PedidoController::class, 'status']);
+    Route::get('/pedido/status/{id}', [PedidoController::class, 'status']);
 
-Route::post('/pedido/status/{id}', [PedidoController::class, 'updatePedido']);
+    Route::post('/pedido/status/{id}', [PedidoController::class, 'updatePedido']);
+});
