@@ -2,6 +2,8 @@
 
 set -e
 
+git config --global --add safe.directory /var/www
+
 # Espera o banco de dados estar pronto (ajuste conforme o nome do serviço no docker-compose)
 echo "Aguardando o banco de dados..."
 until nc -z -v -w30 db 3306; do
