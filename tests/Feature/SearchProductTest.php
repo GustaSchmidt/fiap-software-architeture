@@ -29,31 +29,27 @@ class SearchProductTest extends TestCase
     public function deve_retornar_produto_existente()
     {
         $product = Product::create([
-            'nome' => 'Bolo de Cenoura',
-            'preco' => 12.5,
+            'nome' => 'Bolo de Cenoura TESTE',
+            'preco' => 1200000.5,
             'categoria' => 'Confeitaria',
-            'ingredientes' => ['cenoura', 'açúcar', 'farinha de trigo', 'ovos'],
-            'porcao' => '100g',
-            'informacoes_nutricionais' => [
-                'calorias' => 250,
-                'proteinas' => 3.5,
-                'gorduras' => 8.0,
-                'carboidratos' => 35.0,
-            ],
-            'alergenicos' => 'Contém glúten e ovos',
+            'ingredientes' => json_encode(['cenoura', 'açúcar', 'farinha de trigo', 'ovos']),
+            'porcao' => '10000g',
+            'informacoes_nutricionais' => json_encode(['calorias' => 120, 'proteinas' => 3]),
+            'alergenicos' => 'Contém glúten e ovos, amendoas',
             'loja_id' => $this->loja->id,
         ]);
+
 
         $response = $this->getJson("/api/product/{$product->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
             'id' => $product->id,
-            'nome' => 'Bolo de Cenoura',
-            'preco' => 12.5,
+            'nome' => 'Bolo de Cenoura TESTE',
+            'preco' => 1200000.5,
             'categoria' => 'Confeitaria',
-            'porcao' => '100g',
-            'alergenicos' => 'Contém glúten e ovos',
+            'porcao' => '10000g',
+            'alergenicos' => 'Contém glúten e ovos, amendoas',
             'loja_id' => $this->loja->id,
         ]);
     }

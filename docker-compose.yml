@@ -31,7 +31,7 @@ services:
 
     # db mysql
     db:
-        image: mysql:5.7.22
+        image: mariadb:10.6
         restart: unless-stopped
         environment:
             MYSQL_DATABASE: ${DB_DATABASE:-laravel}
@@ -50,7 +50,7 @@ services:
         image: phpmyadmin/phpmyadmin
         restart: unless-stopped
         ports:
-            - "8080:80"
+            - "8081:80"
         environment:
             PMA_HOST: db
             PMA_PORT: 3306

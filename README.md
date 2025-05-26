@@ -62,17 +62,17 @@ cd fiap-software-architeture
 cp .env.example .env
 
 # Suba os containers do projeto
-docker-compose up --build
+docker compose up --build
 
 # Para acessar o container pra casos de debug
-docker-compose exec app bash
+docker compose exec app bash
 ```
 
 ## 🚀 Cagou com o DB e precisa reiniciar? (so para ambiente de DEV)
 
 ```bash
 # Para acessar o container pra casos de debug
-docker-compose exec app bash
+docker compose exec app bash
 
 # Limpar db
 php artisan migrate:fresh --seed --force
