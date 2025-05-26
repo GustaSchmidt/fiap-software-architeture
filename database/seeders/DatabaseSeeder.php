@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             LojaSeeder::class,
             ProductSeeder::class,
-            SacolaSeeder::class
+            SacolaSeeder::class,
+            ApiKeysTableSeeder::class
         ]);
     }
 
