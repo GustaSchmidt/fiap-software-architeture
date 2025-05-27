@@ -143,8 +143,7 @@ class SacolaRepository implements SacolaRepositoryInterface
         $descricaoPagamento = "Pedido da Sacola #{$sacola->id} - Cliente: {$cliente->nome}";
         $externalReference = "SAC_{$sacola->id}_CLI_{$clientId}_" . time();
         // Certifique-se de que esta rota existe e está configurada para webhooks
-        $notificationUrl = route('webhooks.mercadopago.notification'); // Crie uma rota nomeada para isso
-        $notificationUrl = 'https://kmxrxbxzk5nr6tek4pri4vj6ay0myolv.lambda-url.us-east-1.on.aws/';
+        $notificationUrl = route('webhooks.mercadopago.notification');
 
         try {
             $dadosPagamentoMP = $this->mercadoPagoClient->criarPagamentoPix(
