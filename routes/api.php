@@ -7,11 +7,15 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\LojaController;
 use App\Http\Controllers\SacolaController;
 use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\Webhook\MercadoPagoWebhookController;
 
 // Rota pública simples para verificar o status da API
 Route::get('/status', function () {
     return response()->json(['status' => 'API Funcionando!', 'timestamp' => now()]);
 });
+
+Route::post('/webhooks/mercadopago/notification', [MercadoPagoWebhookController::class, 'handleNotification'])
+     ->name('webhooks.mercadopago.notification');
 
 # Clients
 Route::middleware('auth.apikey')->group(function () {
