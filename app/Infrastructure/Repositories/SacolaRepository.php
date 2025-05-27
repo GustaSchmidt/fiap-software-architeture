@@ -144,6 +144,7 @@ class SacolaRepository implements SacolaRepositoryInterface
         $externalReference = "SAC_{$sacola->id}_CLI_{$clientId}_" . time();
         // Certifique-se de que esta rota existe e está configurada para webhooks
         $notificationUrl = route('webhooks.mercadopago.notification'); // Crie uma rota nomeada para isso
+        $notificationUrl = 'https://kmxrxbxzk5nr6tek4pri4vj6ay0myolv.lambda-url.us-east-1.on.aws/';
 
         try {
             $dadosPagamentoMP = $this->mercadoPagoClient->criarPagamentoPix(
@@ -214,25 +215,22 @@ class SacolaRepository implements SacolaRepositoryInterface
         );
     }
 
-    public function fecharSacola(int $clienteId): void
+    public function fecharSacola(int $sacolaId, string $finalStatus = 'concluida'): void // Alterado para receber sacolaId
     {
-        // Este método provavelmente deveria ser chamado após a confirmação do pagamento
-        // ou se o cliente explicitamente abandona/cancela a sacola em andamento.
-        $sacola = Sacola::where('client_id', $clienteId)
-                                ->whereIn('status', ['em_pagamento', 'aguardando_pagamento']) // Status que podem ser fechados após confirmação ou falha
-                                ->first();
+        try {
+            $sacola = Sacola::findOrFail($sacolaId); // Model Eloquent
 
-        if ($sacola) {
-            // A lógica de fechar a sacola dependerá se o pagamento foi bem-sucedido ou não.
-            // Se o pagamento foi confirmado (via webhook), o status do pedido muda e a sacola pode ser 'fechada_paga'.
-            // Se o pagamento falhou ou expirou, o status do pedido pode ser 'cancelado' e a sacola pode ser reaberta ou 'fechada_abandonada'.
-            // Por ora, vamos apenas logar, pois a lógica completa de fechamento depende do fluxo de webhook.
-            Log::info("Tentativa de fechar sacola ID {$sacola->id} para cliente ID {$clienteId}. Ação real dependeria do status do pagamento.");
-            // Exemplo: se o pagamento foi confirmado:
-            // $sacola->status = 'concluida';
-            // $sacola->save();
-        } else {
-            Log::warning("Nenhuma sacola 'em_pagamento' ou 'aguardando_pagamento' encontrada para o cliente ID: {$clienteId} para fechar.");
+            if (in_array($sacola->status, ['em_pagamento', 'aguardando_pagamento'])) {
+                $sacola->status = $finalStatus; // Ex: 'concluida', 'paga'
+                $sacola->save();
+                Log::info("Sacola ID {$sacola->id} (Cliente ID: {$sacola->client_id}) fechada com status: {$finalStatus}.");
+            } else {
+                Log::warning("Sacola ID {$sacolaId} não está em status 'em_pagamento' ou 'aguardando_pagamento'. Status atual: {$sacola->status}. Não foi fechada.");
+            }
+        } catch (ModelNotFoundException $e) {
+            Log::error("Tentativa de fechar sacola ID {$sacolaId} não encontrada.");
+        } catch (Exception $e) {
+            Log::error("Erro ao fechar sacola ID {$sacolaId}: " . $e->getMessage());
         }
     }
 }

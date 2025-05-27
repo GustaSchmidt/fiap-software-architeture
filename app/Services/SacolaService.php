@@ -29,8 +29,8 @@ class SacolaService
         return $this->sacolaRepository->findById($sacolaId);
     }
 
-    public function fecharSacola(int $clienteId): void
+    public function fecharSacola(int $sacolaId): void
     {
-        $this->sacolaRepository->fecharSacola($clienteId);
+        $this->sacolaRepository->fecharSacola($sacolaId, 'concluida');
     }
 }

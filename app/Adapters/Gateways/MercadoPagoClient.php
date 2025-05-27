@@ -88,7 +88,7 @@ class MercadoPagoClient
         }
         // Adicionando um campo de metadados para rastreabilidade, se necessário
         $payload['metadata'] = [
-            'origin' => 'seu_sistema',
+            'origin' => 'food_delivery_backend',
             'internal_reference' => $externalReference ?? ('sacola_' . uniqid())
         ];
 
@@ -158,6 +158,38 @@ class MercadoPagoClient
                 throw new Exception('Ocorreu um erro inesperado ao processar o pagamento: ' . $e->getMessage(), $e->getCode(), $e);
             }
             throw $e; // Relança a exceção original se já for específica
+        }
+    }
+
+    public function getPaymentDetails(string $paymentId): array
+    {
+        $apiUrl = $this->baseApiUrl . '/payments/' . $paymentId;
+
+        Log::info('Buscando detalhes do pagamento no Mercado Pago', ['url' => $apiUrl, 'payment_id' => $paymentId]);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->accessToken,
+            ])->timeout(20)->get($apiUrl); // Timeout em segundos
+
+            Log::info('Resposta de getPaymentDetails do Mercado Pago', ['status_code' => $response->status(), 'body' => $response->json()]);
+
+            if ($response->failed()) {
+                $errorData = $response->json();
+                $errorMessage = 'Erro ao buscar detalhes do pagamento MP: ' . ($errorData['message'] ?? 'Desconhecido');
+                Log::error($errorMessage, ['status' => $response->status(), 'response' => $errorData, 'payment_id' => $paymentId]);
+                throw new Exception($errorMessage, $response->status());
+            }
+            return $response->json();
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('Erro de conexão MP (getPaymentDetails): ' . $e->getMessage(), ['exception' => $e]);
+            throw new Exception('Erro de comunicação com gateway (detalhes).', 0, $e);
+        } catch (Exception $e) {
+            // Relança se não for uma das exceções já tratadas acima
+            if ($e->getMessage() !== 'Erro de comunicação com gateway (detalhes).' && !str_starts_with($e->getMessage(), 'Erro ao buscar detalhes do pagamento MP:')) {
+            Log::error('Exceção inesperada MP (getPaymentDetails): ' . $e->getMessage());
+            }
+            throw $e;
         }
     }
 }

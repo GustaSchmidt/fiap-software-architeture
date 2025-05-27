@@ -14,8 +14,7 @@ Route::get('/status', function () {
     return response()->json(['status' => 'API Funcionando!', 'timestamp' => now()]);
 });
 
-Route::post('/webhooks/mercadopago/notification', [MercadoPagoWebhookController::class, 'handleNotification'])
-     ->name('webhooks.mercadopago.notification');
+Route::post('/webhooks/mercadopago/notification', [MercadoPagoWebhookController::class, 'handleNotification'])->name('webhooks.mercadopago.notification');
 
 # Clients
 Route::middleware('auth.apikey')->group(function () {
