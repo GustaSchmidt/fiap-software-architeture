@@ -5,15 +5,10 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Models\ApiKey; // Certifique-se de que este namespace está correto para o seu modelo ApiKey
+use App\Models\ApiKey;
 
 class EnsureApiKeyIsValid
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function __invoke(Request $request, Closure $next): Response
     {
         // Obtém a chave do header (ex: Authorization: Bearer API_KEY)
