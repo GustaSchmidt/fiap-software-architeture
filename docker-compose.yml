@@ -12,20 +12,9 @@ services:
             - ./:/var/www
         depends_on:
             - redis
-            - nginx
             - db
-        networks:
-            - laravel
-
-    # nginx
-    nginx:
-        image: nginx:alpine
-        restart: unless-stopped
         ports:
-            - "8989:80"
-        volumes:
-            - ./:/var/www
-            - ./docker/nginx/:/etc/nginx/conf.d/
+            - "8000:8000"
         networks:
             - laravel
 
@@ -57,7 +46,6 @@ services:
             MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
         depends_on:
             - redis
-            - nginx
             - db
         networks:
             - laravel
