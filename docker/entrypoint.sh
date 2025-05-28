@@ -20,7 +20,7 @@ fi
 if [ "$DB_ENV" = "dev" ];
   echo "Gerando APP_KEY..."
   php artisan key:generate
-else
+fi
 
 # Executa as migrations (remova --seed se não quiser popular)
 echo "Executando migrations e seeders..."
