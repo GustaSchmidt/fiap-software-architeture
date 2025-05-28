@@ -12,10 +12,10 @@ echo "Aguardando o banco de dados..."
 # done
 
 # Instala as dependências do PHP (se a pasta vendor não existir)
-if [ ! -d "vendor" ]; then
+# if [ ! -d "vendor" ]; then
   echo "Instalando dependências com Composer..."
   composer install
-fi
+# fi
 
 if [ "$DB_ENV" = "dev" ];
   echo "Gerando APP_KEY..."
