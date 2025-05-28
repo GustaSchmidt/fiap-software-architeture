@@ -6,10 +6,10 @@ git config --global --add safe.directory /var/www
 
 # Espera o banco de dados estar pronto (ajuste conforme o nome do serviço no docker-compose)
 echo "Aguardando o banco de dados..."
-until nc -z -v -w30 db 3306; do
-  echo "Aguardando conexão com o banco de dados..."
-  sleep 5
-done
+# until nc -z -v -w30 db 3306; do
+#   echo "Aguardando conexão com o banco de dados..."
+#   sleep 5
+# done
 
 # Instala as dependências do PHP (se a pasta vendor não existir)
 if [ ! -d "vendor" ]; then
