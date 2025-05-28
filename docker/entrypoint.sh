@@ -17,14 +17,10 @@ if [ ! -d "vendor" ]; then
   composer install
 fi
 
-# Gera a chave da aplicação, se ainda não existir
-if [ ! -f ".env" ]; then
-  echo "Arquivo .env não encontrado. Abortando."
-  exit 1
-fi
-
-echo "Gerando APP_KEY..."
-php artisan key:generate
+if [ "$DB_ENV" = "dev" ];
+  echo "Gerando APP_KEY..."
+  php artisan key:generate
+else
 
 # Executa as migrations (remova --seed se não quiser popular)
 echo "Executando migrations e seeders..."
