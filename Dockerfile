@@ -2,6 +2,7 @@ FROM php:8.4-fpm
 
 ARG user=foodeliveryapi
 ARG uid=1000
+EXPOSE 8000
 
 # Instalar dependências do sistema + extensões do PHP
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -13,7 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     unzip \
     netcat-traditional \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets \
+    libpq-dev \
+    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd sockets \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apt-get clean \
@@ -28,6 +30,7 @@ RUN useradd -u ${uid} -G www-data,root -d /home/${user} -m ${user} \
     && chown -R ${user}:${user} /home/${user}
 
 # Definir diretório de trabalho
+COPY ./ /var/www/
 WORKDIR /var/www
 
 # Copiar configurações personalizadas
