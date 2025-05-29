@@ -65,6 +65,14 @@ else
 fi
 echo "✅ Migrations concluídas."
 
+# Criando chave de API para usar no teste
+if [ "$APP_ENV" = "dev" ]; then
+  echo "🔑 Gerando chave de API de teste..."
+  php artisan apikey:create "Chave de Teste" --role=admin --client-id=1 || {
+    echo "⚠️  Falha ao criar a chave de API de teste (talvez já exista)."
+  }
+fi
+
 # --- Inicialização do Servidor ---
 
 # Inicia o PHP-FPM

@@ -20,19 +20,19 @@ services:
 
     # db mysql
     db:
-        image: mariadb:10.6
+        image: postgres:15
         restart: unless-stopped
         environment:
-            MYSQL_DATABASE: ${DB_DATABASE:-laravel}
-            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
-            MYSQL_PASSWORD: ${DB_PASSWORD:-root}
-            MYSQL_USER: ${DB_USERNAME:-root}
+            POSTGRES_DB: ${DB_DATABASE:-laravel}
+            POSTGRES_USER: ${DB_USERNAME:-root}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-root}
         volumes:
-            - ./.docker/mysql/dbdata:/var/lib/mysql
+            - ./.docker/postgres/dbdata:/var/lib/postgresql/data
         ports:
-            - "3388:3306"
+            - "5432:5432"
         networks:
             - laravel
+
 
     # PHPMyAdmin
     phpmyadmin:
