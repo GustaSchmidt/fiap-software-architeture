@@ -5,28 +5,62 @@ namespace App\Infrastructure\Repositories;
 use App\Domain\Entities\Product as DomainProduct;
 use App\Domain\Repositories\ProductRepositoryInterface;
 use App\Models\Product;
+use Exception;
 
 class ProductRepository implements ProductRepositoryInterface
 {
+    /**
+     * Salva ou atualiza um produto no banco de dados.
+     *
+     * @param DomainProduct $domainProduct
+     * @return DomainProduct
+     * @throws Exception
+     */
     public function save(DomainProduct $domainProduct): DomainProduct
     {
-        $model = Product::create([
-            'nome' => $domainProduct->nome,
-            'preco' => $domainProduct->preco,
-            'categoria' => $domainProduct->categoria,
-            'ingredientes' => json_encode($domainProduct->ingredientes),
-            'porcao' => $domainProduct->porcao,
-            'informacoes_nutricionais' => json_encode($domainProduct->informacoes_nutricionais),
-            'alergenicos' => $domainProduct->alergenicos,
-            'loja_id' => $domainProduct->loja_id,
-        ]);
+        $model = $domainProduct->id
+            ? Product::find($domainProduct->id)
+            : new Product();
 
-        $domainProduct->id = $model->id;
-        return $domainProduct;
+        if ($model) {
+            $model->nome = $domainProduct->nome;
+            $model->preco = $domainProduct->preco;
+            $model->categoria = $domainProduct->categoria;
+            $model->ingredientes = json_encode($domainProduct->ingredientes);
+            $model->porcao = $domainProduct->porcao;
+            $model->informacoes_nutricionais = json_encode($domainProduct->informacoes_nutricionais);
+            $model->alergenicos = $domainProduct->alergenicos;
+            $model->loja_id = $domainProduct->loja_id;
+            
+            $model->save();
+            $domainProduct->id = $model->id;
+            return $domainProduct;
+        }
+
+        throw new Exception('Produto não encontrado para atualização.');
     }
+
+    /**
+     * Verifica se um produto com o mesmo nome já existe para uma loja específica.
+     *
+     * @param string $nome
+     * @param int $lojaId
+     * @return bool
+     */
+    public function existsForLoja(string $nome, int $lojaId): bool
+    {
+        return Product::where('nome', $nome)->where('loja_id', $lojaId)->exists();
+    }
+
+    /**
+     * Encontra um produto pelo seu ID.
+     *
+     * @param int $id
+     * @return DomainProduct|null
+     */
     public function findById(int $id): ?DomainProduct
     {
-        $product = Product::find($id); // Usando find() para buscar o produto
+        $product = Product::find($id);
         if ($product) {
             return new DomainProduct(
                 $product->id,
@@ -41,9 +75,15 @@ class ProductRepository implements ProductRepositoryInterface
             );
         }
 
-        return null; // Retorna null se não encontrar o produto
+        return null;
     }
 
+    /**
+     * Encontra produtos por categoria.
+     *
+     * @param string|null $categoria
+     * @return array
+     */
     public function findByCategory(?string $categoria): array
     {
         $query = Product::query();
@@ -62,6 +102,14 @@ class ProductRepository implements ProductRepositoryInterface
             ];
         })->toArray();
     }
+    
+    /**
+     * Atualiza um produto.
+     *
+     * @param int $id
+     * @param array $data
+     * @return bool
+     */
     public function update(int $id, array $data): bool
     {
         $product = Product::find($id);
@@ -73,14 +121,21 @@ class ProductRepository implements ProductRepositoryInterface
         $product->nome = $data['nome'];
         $product->preco = $data['preco'];
         $product->categoria = $data['categoria'];
-        $product->ingredientes = $data['ingredientes'];
+        $product->ingredientes = json_encode($data['ingredientes']);
         $product->porcao = $data['porcao'];
-        $product->informacoes_nutricionais = $data['informacoes_nutricionais'];
+        $product->informacoes_nutricionais = json_encode($data['informacoes_nutricionais']);
         $product->alergenicos = $data['alergenicos'] ?? null;
         $product->loja_id = $data['loja_id'];
 
         return $product->save();
     }
+
+    /**
+     * Deleta um produto.
+     *
+     * @param int $id
+     * @return bool
+     */
     public function delete(int $id): bool
     {
         $product = Product::find($id);
@@ -91,5 +146,4 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $product->delete();
     }
-
 }
