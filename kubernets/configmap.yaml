@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soat-config
+data:
+  db_name: laravel
+  db_user: root
+  POSTGRES_DB: laravel
+  POSTGRES_USER: root
