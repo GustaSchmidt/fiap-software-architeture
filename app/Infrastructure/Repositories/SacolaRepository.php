@@ -5,231 +5,133 @@ use App\Domain\Repositories\SacolaRepositoryInterface;
 use App\Models\Sacola as Sacola;
 use App\Domain\Entities\Sacola as DomainSacola;
 use App\Models\Product;
-use App\Models\Pedido;
-use App\Models\Client as Client; // Importar o modelo Client
-use Illuminate\Support\Facades\Log;
-use App\Adapters\Gateways\MercadoPagoClient;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Exception; // Para capturar exceções
+use Exception;
 
 class SacolaRepository implements SacolaRepositoryInterface
 {
-    protected MercadoPagoClient $mercadoPagoClient;
-
-    // Injeção de Dependência do MercadoPagoClient
-    public function __construct(MercadoPagoClient $mercadoPagoClient)
-    {
-        $this->mercadoPagoClient = $mercadoPagoClient;
-    }
-
+    /**
+     * Adiciona um item a uma sacola de um cliente.
+     *
+     * @param int $clienteId
+     * @param int $produtoId
+     * @param int $quantidade
+     * @return void
+     */
     public function adicionarItem(int $clienteId, int $produtoId, int $quantidade): void
     {
-        $sacola = Sacola::where('client_id', $clienteId)
-                                ->where('status', 'aberta') // Garante que só adiciona a sacolas abertas
-                                ->first();
-
-        if (!$sacola) {
-            $sacola = Sacola::create([
-                'client_id' => $clienteId,
-                'status' => 'aberta',
-                'total' => 0,
-            ]);
-        }
-
+        $sacola = Sacola::firstOrCreate(['client_id' => $clienteId, 'status' => 'aberta']);
         $produto = Product::findOrFail($produtoId);
-        $produtoNaSacola = $sacola->products()->where('product_id', $produtoId)->first();
 
-        if ($produtoNaSacola) {
-            $produtoNaSacola->pivot->quantidade += $quantidade;
-            // Validação de quantidade máxima ou estoque pode ser adicionada aqui
-            $produtoNaSacola->pivot->save();
-        } else {
-            $sacola->products()->attach($produtoId, ['quantidade' => $quantidade]);
-        }
-        $this->recalcularTotalSacola($sacola);
-    }
-
-    protected function recalcularTotalSacola(Sacola $sacola): void
-    {
-        $total = 0;
-        // Eager load products se não vierem carregados para evitar N+1
-        $sacola->loadMissing('products');
-        foreach ($sacola->products as $produto) {
-            $total += $produto->preco * $produto->pivot->quantidade;
-        }
-        $sacola->total = $total;
+        $sacola->produtos()->attach($produtoId, [
+            'quantidade' => $quantidade,
+            'preco_unitario' => $produto->preco
+        ]);
+        $thisola->total += ($produto->preco * $quantidade);
         $sacola->save();
     }
 
+    /**
+     * Lista os itens da sacola de um cliente.
+     *
+     * @param int $clientId
+     * @return array
+     */
     public function listarPorCliente(int $clientId): array
     {
-        $sacola = Sacola::where('client_id', $clientId)
-            ->whereNotIn('status', ['fechada', 'pago_aprovado', 'cancelada']) // Exclui sacolas já finalizadas/canceladas
-            ->with('products') // Eager load products
-            ->first();
+        $sacola = Sacola::where('client_id', $clientId)->where('status', 'aberta')->first();
 
-        if (!$sacola) {
+        if ($sacola) {
+            $items = $sacola->produtos->map(function ($produto) {
+                return [
+                    'id' => $produto->id,
+                    'nome' => $produto->nome,
+                    'preco_unitario' => $produto->pivot->preco_unitario,
+                    'quantidade' => $produto->pivot->quantidade
+                ];
+            });
+
             return [
-                'client_id' => $clientId,
-                'produtos' => [],
-                'valor_total' => '0,00', // Manter formato
-                'status_sacola' => 'inexistente'
+                'id' => $sacola->id,
+                'total' => $sacola->total,
+                'produtos' => $items->toArray()
             ];
         }
 
-        $this->recalcularTotalSacola($sacola);
-
-        return [
-            'client_id' => $sacola->client_id,
-            'sacola_id' => $sacola->id,
-            'status_sacola' => $sacola->status,
-            'produtos' => $sacola->products->map(function ($produto) {
-                return [
-                    'id_produto' => $produto->id,
-                    'nome' => $produto->nome,
-                    'quantidade' => $produto->pivot->quantidade,
-                    'preco_unitario' => number_format($produto->preco, 2, ',', '.'),
-                    'preco_total_item' => number_format($produto->preco * $produto->pivot->quantidade, 2, ',', '.')
-                ];
-            })->toArray(),
-            'valor_total' => number_format($sacola->total, 2, ',', '.')
-        ];
+        return ['id' => null, 'total' => 0, 'produtos' => []];
     }
 
+    /**
+     * Remove um item da sacola de um cliente.
+     *
+     * @param int $clientId
+     * @param int $produtoId
+     * @return void
+     */
     public function removerItem(int $clientId, int $produtoId): void
     {
-        $sacola = Sacola::where('client_id', $clientId)
-                                ->where('status', 'aberta') // Só permite remover de sacolas abertas
-                                ->firstOrFail();
+        $sacola = Sacola::where('client_id', $clientId)->where('status', 'aberta')->first();
 
-        $produtoNaSacola = $sacola->products()->where('product_id', $produtoId)->first();
-
-        if ($produtoNaSacola) {
-            $sacola->products()->detach($produtoId);
-            $this->recalcularTotalSacola($sacola);
-        } else {
-            throw new Exception("Produto ID {$produtoId} não encontrado na sacola aberta do cliente ID {$clientId}.");
+        if ($sacola) {
+            $produto = $sacola->produtos()->where('product_id', $produtoId)->first();
+            if ($produto) {
+                $sacola->total -= ($produto->pivot->preco_unitario * $produto->pivot->quantidade);
+                $sacola->save();
+                $sacola->produtos()->detach($produtoId);
+            }
         }
     }
 
-    public function checkout(int $clientId): array
-    {
-        $sacola = Sacola::where('client_id', $clientId)
-                                ->where('status', 'aberta')
-                                ->with('products')
-                                ->firstOrFail();
-
-        if ($sacola->products->isEmpty()) {
-            throw new Exception("A sacola está vazia. Adicione produtos antes de fazer o checkout.");
-        }
-
-        $this->recalcularTotalSacola($sacola); // Garante que o total está correto
-        $valorTotalPagamento = $sacola->total;
-
-        if ($valorTotalPagamento <= 0) {
-             throw new Exception("O valor total da sacola deve ser maior que zero para o checkout.");
-        }
-
-        $cliente = Client::findOrFail($clientId); //
-
-        $payerInfo = [
-            'email' => $cliente->email,
-            'first_name' => $cliente->nome,
-            'last_name' => $cliente->sobrenome,
-            'identification_type' => 'CPF', // Ou lógica para determinar se é CPF/CNPJ
-            'identification_number' => preg_replace('/\D/', '', $cliente->cpf), // Remove não-dígitos
-        ];
-
-        $descricaoPagamento = "Pedido da Sacola #{$sacola->id} - Cliente: {$cliente->nome}";
-        $externalReference = "SAC_{$sacola->id}_CLI_{$clientId}_" . time();
-        // Certifique-se de que esta rota existe e está configurada para webhooks
-        $notificationUrl = route('webhooks.mercadopago.notification'); // Crie uma rota nomeada para isso
-
-        try {
-            $dadosPagamentoMP = $this->mercadoPagoClient->criarPagamentoPix(
-                $valorTotalPagamento,
-                $descricaoPagamento,
-                $payerInfo,
-                $externalReference,
-                $notificationUrl
-            );
-        } catch (Exception $e) {
-            Log::error("Falha no checkout - Erro ao criar pagamento PIX MP para sacola ID {$sacola->id}: " . $e->getMessage(), [
-                'sacola_id' => $sacola->id,
-                'client_id' => $clientId,
-                'exception_message' => $e->getMessage(),
-                'exception_trace' => $e->getTraceAsString() // Para debug, pode ser muito verboso para produção
-            ]);
-            throw new Exception("Não foi possível processar seu pagamento no momento. Tente novamente mais tarde. Detalhe: " . $e->getMessage());
-        }
-        //
-        $pedido = Pedido::create([
-            'client_id' => $clientId,
-            'sacola_id' => $sacola->id,
-            'status' => 'aguardando_pagamento', // Status inicial do pedido
-            'total' => $valorTotalPagamento,
-            'payment_method' => 'pix_mercadopago',
-            'mercado_pago_id' => $dadosPagamentoMP['id'] ?? null, // Salva o ID do pagamento do MP
-            'external_payment_reference' => $externalReference,
-        ]);
-
-        $sacola->status = 'em_pagamento'; // Muda o status da sacola
-        $sacola->save();
-
-        Log::info("Checkout iniciado para sacola ID {$sacola->id}. Pedido ID {$pedido->id} criado. MP Payment ID {$dadosPagamentoMP['id']}.");
-
-        return [
-            'pedido_id' => $pedido->id,
-            'status_pedido' => $pedido->status,
-            'valor_total' => number_format($pedido->total, 2, ',', '.'),
-            'metodo_pagamento' => $pedido->payment_method,
-            'mercado_pago_payment_id' => $dadosPagamentoMP['id'] ?? null,
-            'mercado_pago_payment_status' => $dadosPagamentoMP['status'] ?? null,
-            'pix_qr_code_base64' => $dadosPagamentoMP['qr_code_base64'] ?? null,
-            'pix_copia_cola' => $dadosPagamentoMP['qr_code_text'] ?? null,
-            'mensagem' => 'Pedido realizado com sucesso! Utilize o QR Code ou o código "Copia e Cola" para efetuar o pagamento PIX.'
-        ];
-    }
-
+    /**
+     * Encontra uma sacola pelo ID.
+     *
+     * @param int $sacolaId
+     * @return DomainSacola
+     */
     public function findById(int $sacolaId): DomainSacola
     {
-        $Sacola = Sacola::with('products')->findOrFail($sacolaId);
-
-        // Mapeia os dados do model Eloquent para a entidade DomainSacola
-        $produtosArray = $Sacola->products->map(function ($produto) {
+        $sacola = Sacola::findOrFail($sacolaId);
+        $produtos = $sacola->produtos->map(function ($produto) {
             return [
                 'id' => $produto->id,
                 'nome' => $produto->nome,
-                'preco' => (float) $produto->preco,
-                'quantidade' => (int) $produto->pivot->quantidade,
+                'preco_unitario' => $produto->pivot->preco_unitario,
+                'quantidade' => $produto->pivot->quantidade
             ];
         })->toArray();
-
         return new DomainSacola(
-            $Sacola->id,
-            $Sacola->client_id,
-            $Sacola->status,
-            $produtosArray,
-            (float) $Sacola->total
+            $sacola->id,
+            $sacola->client_id,
+            $sacola->status,
+            $sacola->total,
+            $produtos
         );
     }
-
-    public function fecharSacola(int $sacolaId, string $finalStatus = 'concluida'): void // Alterado para receber sacolaId
+    
+    /**
+     * Fecha a sacola do cliente.
+     *
+     * @param int $sacolaId
+     * @param string $finalStatus
+     * @return void
+     */
+    public function fecharSacola(int $sacolaId, string $finalStatus = 'concluida'): void
     {
-        try {
-            $sacola = Sacola::findOrFail($sacolaId); // Model Eloquent
-
-            if (in_array($sacola->status, ['em_pagamento', 'aguardando_pagamento'])) {
-                $sacola->status = $finalStatus; // Ex: 'concluida', 'paga'
-                $sacola->save();
-                Log::info("Sacola ID {$sacola->id} (Cliente ID: {$sacola->client_id}) fechada com status: {$finalStatus}.");
-            } else {
-                Log::warning("Sacola ID {$sacolaId} não está em status 'em_pagamento' ou 'aguardando_pagamento'. Status atual: {$sacola->status}. Não foi fechada.");
-            }
-        } catch (ModelNotFoundException $e) {
-            Log::error("Tentativa de fechar sacola ID {$sacolaId} não encontrada.");
-        } catch (Exception $e) {
-            Log::error("Erro ao fechar sacola ID {$sacolaId}: " . $e->getMessage());
-        }
+        $sacola = Sacola::findOrFail($sacolaId);
+        $sacola->status = $finalStatus;
+        $sacola->save();
+    }
+    
+    /**
+     * Atualiza o status da sacola.
+     *
+     * @param int $sacolaId
+     * @param string $status
+     * @return void
+     */
+    public function updateStatus(int $sacolaId, string $status): void
+    {
+        $sacola = Sacola::findOrFail($sacolaId);
+        $sacola->status = $status;
+        $sacola->save();
     }
 }
