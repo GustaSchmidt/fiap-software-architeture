@@ -1,6 +1,6 @@
 # fiap-software-architeture
 
-# SOAT Tech Challenge - Fast Food (FASE 1)
+# SOAT Tech Challenge - Fast Food (FASE 2)
 
 ## 🧾 Descrição do Projeto
 
