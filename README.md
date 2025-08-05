@@ -184,3 +184,11 @@ Caso o seu ambiente seja o codespace utilize o `kubectl port-forward service/soa
 A documentação do Swagger da API estará disponível em:
 
   * **Swagger UI**: `http://localhost:8000/api/documentation`
+
+## Outros documentos:
+
+- [Arquitetura geral](docs/architeture.md)
+- [Explicações do checkout](docs/checkout_docs.md)
+- [Como a aplicação usa o DB](docs/data_persistece.md)
+- [Domain-Driven Design (DDD): Um Resumo](docs/ddd.md)
+- [Detalhes do Kubernets](docs/k8_architeture.md)
