@@ -22,17 +22,20 @@ jobs:
     
     steps:
       - name: Check if secret is available
+        env:
+          # Passamos o secret inteiro para o ambiente do script
+          THE_SECRET: ${{ secrets.TF_API_TOKEN }}
         run: |
-          if [ -z "${{ secrets.TF_API_TOKEN }}" ]; then
+          # Verificamos a variável de ambiente dentro do script
+          if [ -z "$THE_SECRET" ]; then
             echo "ERRO: O secret TF_API_TOKEN está VAZIO ou não foi encontrado."
             exit 1
           else
             echo "SUCESSO: O secret TF_API_TOKEN foi encontrado!"
-            echo "As iniciais do token são: ${{ secrets.TF_API_TOKEN_START }}"
+            # Usamos a sintaxe do shell para pegar os primeiros 5 caracteres
+            SECRET_START=${THE_SECRET:0:5}
+            echo "As iniciais do token são: $SECRET_START..."
           fi
-        env:
-          # Criamos uma variável de ambiente apenas com os 5 primeiros caracteres
-          TF_API_TOKEN_START: ${{ secrets.TF_API_TOKEN && secrets.TF_API_TOKEN.slice(0, 5) }}
   ###################################################
   # Job 1: Descobre quais arquivos foram alterados  #
   ###################################################
