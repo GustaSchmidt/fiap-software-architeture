@@ -16,6 +16,23 @@ on:
       - 'lambda_auth_cpf/**'
 
 jobs:
+  test-secret:
+    name: 'Test Terraform API Token'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check if secret is available
+        run: |
+          if [ -z "${{ secrets.TF_API_TOKEN }}" ]; then
+            echo "ERRO: O secret TF_API_TOKEN está VAZIO ou não foi encontrado."
+            exit 1
+          else
+            echo "SUCESSO: O secret TF_API_TOKEN foi encontrado!"
+            echo "As iniciais do token são: ${{ secrets.TF_API_TOKEN_START }}"
+          fi
+        env:
+          # Criamos uma variável de ambiente apenas com os 5 primeiros caracteres
+          TF_API_TOKEN_START: ${{ secrets.TF_API_TOKEN && secrets.TF_API_TOKEN.slice(0, 5) }}
   ###################################################
   # Job 1: Descobre quais arquivos foram alterados  #
   ###################################################
