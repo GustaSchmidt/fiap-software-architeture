@@ -125,7 +125,7 @@ jobs:
         run: terraform init
         working-directory: ./terraform/database
         env:
-           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Plan
         id: plan
@@ -137,7 +137,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
         working-directory: ./terraform/database
         env:
-           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Post Plan to PR
@@ -152,5 +152,5 @@ jobs:
         run: terraform apply -auto-approve -input=false
         working-directory: ./terraform/database
         env:
-           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
