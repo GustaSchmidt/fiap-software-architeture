@@ -16,21 +16,46 @@ on:
       - 'lambda_auth_cpf/**'
 
 jobs:
+  ###################################################
+  # Job 1: Descobre quais arquivos foram alterados  #
+  ###################################################
+  list-changed-files:
+    name: 'List Changed Files'
+    runs-on: ubuntu-latest
+    outputs:
+      auth_changed: ${{ steps.changed-files.outputs.auth_files }}
+      database_changed: ${{ steps.changed-files.outputs.database_files }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44 # Usando uma action confiável para isso
+        with:
+          # Define o primeiro grupo de arquivos a serem verificados
+          auth_files: |
+            terraform/auth/**
+            lambda_auth_cpf/**
+          # Define o segundo grupo de arquivos
+          database_files: |
+            terraform/database/**
+
   #########################################
-  # Job para a Infra de Autenticação      #
+  # Job 2: Infra de Autenticação          #
   #########################################
   deploy-auth-infra:
     name: 'Terraform Deploy Auth Infra'
+    needs: list-changed-files # Depende do job que lista os arquivos
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
 
-    # Só executa se houver mudanças na pasta 'auth' ou 'lambda'
-    if: |
-      github.event.action == 'closed' && github.event.pull_request.merged == true || 
-      github.event_name == 'push' ||
-      contains(join(github.event.pull_request.changed_files, ' '), 'terraform/auth/') ||
-      contains(join(github.event.pull_request.changed_files, ' '), 'lambda_auth_cpf/')
+    # CONDIÇÃO CORRIGIDA: Roda no merge para 'main' OU se os arquivos de 'auth' foram alterados no PR
+    if: github.event_name == 'push' || needs.list-changed-files.outputs.auth_changed == 'true'
 
     steps:
       - name: Checkout
@@ -40,7 +65,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        id: init
         run: terraform init
         working-directory: ./terraform/auth
         env:
@@ -73,19 +97,17 @@ jobs:
           TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
 
   #########################################
-  # Job para a Infra do Banco de Dados    #
+  # Job 3: Infra do Banco de Dados        #
   #########################################
   deploy-database-infra:
     name: 'Terraform Deploy Database Infra'
+    needs: list-changed-files # Depende do job que lista os arquivos
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
 
-    # Só executa se houver mudanças na pasta 'database'
-    if: |
-      github.event.action == 'closed' && github.event.pull_request.merged == true || 
-      github.event_name == 'push' ||
-      contains(join(github.event.pull_request.changed_files, ' '), 'terraform/database/')
+    # CONDIÇÃO CORRIGIDA: Roda no merge para 'main' OU se os arquivos de 'database' foram alterados no PR
+    if: github.event_name == 'push' || needs.list-changed-files.outputs.database_changed == 'true'
 
     steps:
       - name: Checkout
@@ -95,7 +117,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        id: init
         run: terraform init
         working-directory: ./terraform/database
         env:
