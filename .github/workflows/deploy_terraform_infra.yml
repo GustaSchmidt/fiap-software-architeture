@@ -1,0 +1,130 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'lambda_auth_cpf/**'
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'lambda_auth_cpf/**'
+
+jobs:
+  #########################################
+  # Job para a Infra de Autenticação      #
+  #########################################
+  deploy-auth-infra:
+    name: 'Terraform Deploy Auth Infra'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    # Só executa se houver mudanças na pasta 'auth' ou 'lambda'
+    if: |
+      github.event.action == 'closed' && github.event.pull_request.merged == true || 
+      github.event_name == 'push' ||
+      contains(join(github.event.pull_request.changed_files, ' '), 'terraform/auth/') ||
+      contains(join(github.event.pull_request.changed_files, ' '), 'lambda_auth_cpf/')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: ./terraform/auth
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          PLAN_OUTPUT=$(terraform plan -no-color -input=false)
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/auth
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/post-terraform-plan
+        with:
+          plan_output: ${{ steps.plan.outputs.plan_output }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/auth
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+  #########################################
+  # Job para a Infra do Banco de Dados    #
+  #########################################
+  deploy-database-infra:
+    name: 'Terraform Deploy Database Infra'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    # Só executa se houver mudanças na pasta 'database'
+    if: |
+      github.event.action == 'closed' && github.event.pull_request.merged == true || 
+      github.event_name == 'push' ||
+      contains(join(github.event.pull_request.changed_files, ' '), 'terraform/database/')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: ./terraform/database
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          PLAN_OUTPUT=$(terraform plan -no-color -input=false)
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/database
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/post-terraform-plan
+        with:
+          plan_output: ${{ steps.plan.outputs.plan_output }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/database
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}

@@ -1,3 +1,15 @@
+# Configura terraform cloud
+terraform { 
+  cloud { 
+    
+    organization = "FIAP-SOAT-ORG" 
+
+    workspaces { 
+      name = "fiap-soat-database" 
+    } 
+  } 
+}
+
 # Configura o provedor da AWS
 provider "aws" {
   region = var.aws_region
