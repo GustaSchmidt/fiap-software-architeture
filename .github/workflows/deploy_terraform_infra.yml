@@ -87,14 +87,6 @@ jobs:
         env:
            TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
-      - name: 💬 Print Plan Output (Debug)
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "--- Conteúdo do Plan Capturado ---"
-          echo "${{ steps.plan.outputs.plan_output }}"
-          echo "------------------------------------"
-
-
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
         uses: ./.github/actions/post-terraform-plan
