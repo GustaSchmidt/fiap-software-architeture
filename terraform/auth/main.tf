@@ -18,8 +18,8 @@ provider "aws" {
 # 1. Empacota o código da Lambda em um arquivo .zip
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "../../lambda_auth_cpf/" # Caminho para a pasta da Lambda
-  output_path = "lambda_auth_cpf.zip"
+  source_dir  = "${path.root}/lambda_auth_cpf"
+  output_path = "${path.module}/lambda_function.zip"
 }
 
 # 2. Cria a role de execução para a Lambda
