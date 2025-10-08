@@ -86,6 +86,7 @@ jobs:
         working-directory: ./terraform/auth
         env:
            TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+        continue-on-error: true # Continua mesmo se o plano falhar para postar o erro no PR
 
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
@@ -139,6 +140,7 @@ jobs:
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+        continue-on-error: true
 
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
