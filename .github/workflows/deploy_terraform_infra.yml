@@ -66,14 +66,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🔎 Verify Directory Structure
-        run: |
-          echo "Executando a partir do diretório: $(pwd)"
-          echo "--- Conteúdo da Raiz do Projeto (../../) ---"
-          ls -la ../../
-          echo "-------------------------------------------"
-        working-directory: ./terraform/auth
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
