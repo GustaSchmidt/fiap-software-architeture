@@ -15,3 +15,4 @@ yarn-error.log
 /.vscode
 /.docker
 lambda_auth_cpf/node_modules/*
+lambda_auth_cpf/node_modules
