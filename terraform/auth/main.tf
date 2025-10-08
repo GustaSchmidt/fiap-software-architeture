@@ -18,7 +18,7 @@ provider "aws" {
 # 1. Empacota o código da Lambda em um arquivo .zip
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.root}/lambda_auth_cpf"
+  source_dir  = "${var.project_root_path}/lambda_auth_cpf"
   output_path = "${path.module}/lambda_function.zip"
 }
 
