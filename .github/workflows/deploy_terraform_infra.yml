@@ -101,6 +101,7 @@ jobs:
         working-directory: ./terraform/auth
         env:
            TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+           TF_VAR_project_root_path: ${{ github.workspace }}
 
   #########################################
   # Job 3: Infra do Banco de Dados        #
