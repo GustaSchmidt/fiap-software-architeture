@@ -37,7 +37,7 @@ variable "api_name" {
 # Bucket S3 para armazenar os pacotes de código da Lambda
 resource "aws_s3_bucket" "lambda_artifacts" {
   # Constrói um nome de bucket único usando o ID da conta AWS
-  bucket = "fiap-soat-lambda-artifacts-${data.aws_caller_identity.current.account_id}"
+  bucket = "fiap-soat-lambda-code-artifacts"
 
   tags = {
     Name = "Lambda Artifacts Storage"

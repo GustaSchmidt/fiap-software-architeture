@@ -86,7 +86,7 @@ jobs:
           BRANCH_NAME_SANITIZED=$(echo $BRANCH_NAME | sed 's/[^a-zA-Z0-9]/-/g')
           COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
           S3_KEY="lambda-auth-${BRANCH_NAME_SANITIZED}-${COMMIT_SHA}.zip"
-          BUCKET_NAME="fiap-soat-lambda-code-artifacts-${{ secrets.AWS_ACCOUNT_ID }}"
+          BUCKET_NAME="fiap-soat-lambda-code-artifacts"
 
           echo "--- Gerando o artefato: ${S3_KEY} ---"
 
