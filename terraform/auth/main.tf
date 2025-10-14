@@ -1,39 +1,65 @@
-# Configura terraform cloud
-terraform { 
-  cloud { 
-    
-    organization = "FIAP-SOAT-ORG" 
-
-    workspaces { 
-      name = "fiap-soat-database" 
-    } 
-  } 
+# Configura o Terraform Cloud para o workspace de autenticação
+terraform {
+  cloud {
+    organization = "FIAP-SOAT-ORG"
+    workspaces {
+      name = "fiap-soat-auth" # CORRIGIDO: Aponta para o workspace correto
+    }
+  }
 }
 
 # Configura o provedor da AWS
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1" # Você pode mover isso para um variables.tf depois
 }
 
-# 1. Empacota o código da Lambda em um arquivo .zip
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_dir  = "${var.project_root_path}/lambda_auth_cpf"
-  output_path = "${path.module}/lambda_function.zip"
+# --- Variáveis de Entrada ---
+
+variable "lambda_code_version" {
+  description = "A versão do código (commit SHA) a ser implantada, vinda do CI/CD."
+  type        = string
 }
 
-# 2. Cria a role de execução para a Lambda
+variable "function_name" {
+  description = "O nome da função Lambda."
+  type        = string
+  default     = "auth-cpf-lambda"
+}
+
+variable "api_name" {
+  description = "O nome do API Gateway."
+  type        = string
+  default     = "auth-api"
+}
+
+# --- Recursos de Armazenamento de Artefatos ---
+
+# Bucket S3 para armazenar os pacotes de código da Lambda
+resource "aws_s3_bucket" "lambda_artifacts" {
+  # Constrói um nome de bucket único usando o ID da conta AWS
+  bucket = "fiap-soat-lambda-artifacts-${data.aws_caller_identity.current.account_id}"
+
+  tags = {
+    Name = "Lambda Artifacts Storage"
+  }
+}
+
+# Obtém o ID da conta da AWS para garantir um nome de bucket único
+data "aws_caller_identity" "current" {}
+
+
+# --- Recursos da Lambda e IAM ---
+
+# Cria a role (permissão) de execução para a Lambda
 resource "aws_iam_role" "lambda_exec_role" {
   name = "${var.function_name}-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Action = "sts:AssumeRole",
-      Effect = "Allow",
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      }
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
 }
@@ -44,55 +70,58 @@ resource "aws_iam_role_policy_attachment" "lambda_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# 3. Cria a função Lambda
+# Cria a função Lambda, apontando para o código no S3
 resource "aws_lambda_function" "auth_lambda" {
-  function_name    = var.function_name
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
-  
-  handler = "index.handler" # Arquivo 'index.js', função 'handler'
-  runtime = "nodejs18.x"
-  role    = aws_iam_role.lambda_exec_role.arn
+  function_name = var.function_name
+  handler       = "index.handler"
+  runtime       = "nodejs18.x"
+  role          = aws_iam_role.lambda_exec_role.arn
 
-  
+  # Aponta para o código no bucket S3, usando a versão passada pelo workflow
+  s3_bucket = aws_s3_bucket.lambda_artifacts.id
+  s3_key    = "lambda-auth-${var.lambda_code_version}.zip"
+
+  # Você irá preencher estas variáveis no Terraform Cloud
   environment {
     variables = {
-      DB_HOST     = "SEU_DB_HOST"
+      DB_HOST     = "DEFINIR_NO_TERRAFORM_CLOUD"
       DB_PORT     = "5432"
-      DB_DATABASE = "SEU_DB_DATABASE"
-      DB_USERNAME = "SEU_DB_USERNAME"
-      DB_PASSWORD = "SEU_DB_PASSWORD"
-      JWT_SECRET  = "SEU_JWT_SECRET_SUPER_SECRETO"
+      DB_DATABASE = "DEFINIR_NO_TERRAFORM_CLOUD"
+      DB_USERNAME = "DEFINIR_NO_TERRAFORM_CLOUD"
+      DB_PASSWORD = "DEFINIR_NO_TERRAFORM_CLOUD"
+      JWT_SECRET  = "DEFINIR_NO_TERRAFORM_CLOUD"
     }
   }
 }
 
-# 4. Cria o API Gateway (HTTP API, que é mais simples e barata)
+
+# --- Recursos do API Gateway ---
+
+# Cria o API Gateway (HTTP API)
 resource "aws_apigatewayv2_api" "http_api" {
   name          = var.api_name
   protocol_type = "HTTP"
 }
 
-# 5. Cria a integração entre o API Gateway e a Lambda
+# Cria a integração entre o API Gateway e a Lambda
 resource "aws_apigatewayv2_integration" "lambda_integration" {
   api_id           = aws_apigatewayv2_api.http_api.id
   integration_type = "AWS_PROXY"
   integration_uri  = aws_lambda_function.auth_lambda.invoke_arn
 }
 
-# 6. Cria a rota POST /auth/cpf
+# Cria a rota POST /auth/cpf
 resource "aws_apigatewayv2_route" "auth_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /auth/cpf"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
-# 7. Dá permissão para o API Gateway invocar a função Lambda
+# Dá permissão para o API Gateway invocar a função Lambda
 resource "aws_lambda_permission" "api_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.auth_lambda.function_name
   principal     = "apigateway.amazonaws.com"
-
-  source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }

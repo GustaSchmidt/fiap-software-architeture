@@ -66,6 +66,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Package and Upload Lambda Code
+        id: package-lambda
+        run: |
+          # Gera um nome de arquivo único com o commit SHA curto
+          COMMIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          S3_KEY="lambda-auth-${COMMIT_SHA}.zip"
+          BUCKET_NAME="fiap-soat-lambda-artifacts-${{ secrets.AWS_ACCOUNT_ID }}" # Garanta que este nome seja o mesmo que o Terraform irá criar
+          
+          # Empacota o código-fonte, ignorando node_modules caso existam
+          cd lambda_auth_cpf
+          zip -r ../${S3_KEY} . -x "*node_modules*"
+          cd ..
+          
+          # Envia o pacote para o S3
+          aws s3 cp ${S3_KEY} s3://${BUCKET_NAME}/${S3_KEY}
+          
+          # Expõe o commit SHA para os próximos passos
+          echo "commit_sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -73,7 +95,7 @@ jobs:
         run: terraform init
         working-directory: ./terraform/auth
         env:
-           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Plan
         id: plan
@@ -85,8 +107,8 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
         working-directory: ./terraform/auth
         env:
-           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-           TF_VAR_project_root_path: ${{ github.workspace }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_lambda_code_version: ${{ steps.package-lambda.outputs.commit_sha }} # Passa a versão para o Terraform
 
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
@@ -101,7 +123,6 @@ jobs:
         working-directory: ./terraform/auth
         env:
            TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-           TF_VAR_project_root_path: ${{ github.workspace }}
 
   #########################################
   # Job 3: Infra do Banco de Dados        #
