@@ -76,21 +76,32 @@ jobs:
       - name: Package and Upload Lambda Code
         id: package-lambda
         run: |
-          # Gera um nome de arquivo único com o commit SHA curto
-          COMMIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-          S3_KEY="lambda-auth-${COMMIT_SHA}.zip"
-          BUCKET_NAME="fiap-soat-lambda-artifacts-${{ secrets.AWS_ACCOUNT_ID }}" # Garanta que este nome seja o mesmo que o Terraform irá criar
-          
-          # Empacota o código-fonte, ignorando node_modules caso existam
+          # 1. Determina o nome da branch de forma inteligente
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          BRANCH_NAME_SANITIZED=$(echo $BRANCH_NAME | sed 's/[^a-zA-Z0-9]/-/g')
+          COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          S3_KEY="lambda-auth-${BRANCH_NAME_SANITIZED}-${COMMIT_SHA}.zip"
+          BUCKET_NAME="fiap-soat-lambda-artifacts-${{ secrets.AWS_ACCOUNT_ID }}"
+
+          echo "--- Gerando o artefato: ${S3_KEY} ---"
+
           cd lambda_auth_cpf
           zip -r ../${S3_KEY} . -x "*node_modules*"
           cd ..
           
-          # Envia o pacote para o S3
-          aws s3 cp ${S3_KEY} s3://${BUCKET_NAME}/${S3_KEY}
+          echo "--- Enviando para s3://${BUCKET_NAME}/${S3_KEY} ---"
           
-          # Expõe o commit SHA para os próximos passos
-          echo "commit_sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
+          aws s3 cp ${S3_KEY} s3://${BUCKET_NAME}/${S3_KEY}
+
+          # Expõe o nome do artefato para os outros jobs/passos
+          
+          echo "s3_key=${S3_KEY}" >> $GITHUB_OUTPUT
+
         env:
           GITHUB_SHA: ${{ github.sha }}
 
