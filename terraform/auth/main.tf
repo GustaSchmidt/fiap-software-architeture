@@ -20,18 +20,6 @@ variable "lambda_code_version" {
   type        = string
 }
 
-variable "function_name" {
-  description = "O nome da função Lambda."
-  type        = string
-  default     = "auth-cpf-lambda"
-}
-
-variable "api_name" {
-  description = "O nome do API Gateway."
-  type        = string
-  default     = "auth-api"
-}
-
 # --- Recursos de Armazenamento de Artefatos ---
 
 # Bucket S3 para armazenar os pacotes de código da Lambda
