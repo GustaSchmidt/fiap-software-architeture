@@ -17,7 +17,7 @@ runs:
       with:
         github-token: ${{ inputs.github_token }}
         script: |
-          const output = `#### Terraform Plan 📖 ${{ github.job }}
+          const output = `#### 📖 Terraform Plan -> ${{ github.job }}
 
           <details><summary>Clique para ver os detalhes</summary>
 
