@@ -13,13 +13,6 @@ provider "aws" {
   region = "us-east-1" # Você pode mover isso para um variables.tf depois
 }
 
-# --- Variáveis de Entrada ---
-
-variable "lambda_code_version" {
-  description = "A versão do código (commit SHA) a ser implantada, vinda do CI/CD."
-  type        = string
-}
-
 # --- Recursos de Armazenamento de Artefatos ---
 
 # Bucket S3 para armazenar os pacotes de código da Lambda

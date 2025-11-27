@@ -15,3 +15,8 @@ variable "api_name" {
   type        = string
   default     = "auth-api"
 }
+
+variable "lambda_code_version" {
+  description = "A versão do código (commit SHA) a ser implantada, vinda do CI/CD."
+  type        = string
+}
