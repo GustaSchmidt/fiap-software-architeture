@@ -15,8 +15,3 @@ variable "api_name" {
   type        = string
   default     = "auth-api"
 }
-
-variable "lambda_s3_key" {
-  description = "A S3 key completa para o ficheiro .zip do código da Lambda."
-  type        = string
-}

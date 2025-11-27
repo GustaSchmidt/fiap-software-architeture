@@ -37,8 +37,6 @@ data "aws_caller_identity" "current" {}
 
 
 # --- Recursos da Lambda e IAM ---
-
-# Cria a role (permissão) de execução para a Lambda
 resource "aws_iam_role" "lambda_exec_role" {
   name = "${var.function_name}-role"
 
@@ -72,12 +70,12 @@ resource "aws_lambda_function" "auth_lambda" {
   # Você irá preencher estas variáveis no Terraform Cloud
   environment {
     variables = {
-      DB_HOST     = "DEFINIR_NO_TERRAFORM_CLOUD"
+      DB_HOST     = "DEFINIDA_NO_TERRAFORM_CLOUD"
       DB_PORT     = "5432"
-      DB_DATABASE = "DEFINIR_NO_TERRAFORM_CLOUD"
-      DB_USERNAME = "DEFINIR_NO_TERRAFORM_CLOUD"
-      DB_PASSWORD = "DEFINIR_NO_TERRAFORM_CLOUD"
-      JWT_SECRET  = "DEFINIR_NO_TERRAFORM_CLOUD"
+      DB_DATABASE = "DEFINIDA_NO_TERRAFORM_CLOUD"
+      DB_USERNAME = "DEFINIDA_NO_TERRAFORM_CLOUD"
+      DB_PASSWORD = "DEFINIDA_NO_TERRAFORM_CLOUD"
+      JWT_SECRET  = "DEFINIDA_NO_TERRAFORM_CLOUD"
     }
   }
 }
