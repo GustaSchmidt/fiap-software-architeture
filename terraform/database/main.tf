@@ -5,7 +5,7 @@ terraform {
     organization = "FIAP-SOAT-ORG" 
 
     workspaces { 
-      name = "fiap-soat-auth" 
+      name = "fiap-soat-database" 
     } 
   } 
 }
@@ -60,7 +60,7 @@ resource "aws_db_subnet_group" "default" {
 # 4. Cria um grupo de segurança (firewall) DENTRO da VPC
 resource "aws_security_group" "db_sg" {
   name        = "db-security-group"
-  description = "Permite tráfego de entrada para o PostgreSQL de dentro da VPC"
+  description = "Permite trafego de entrada para o PostgreSQL de dentro da VPC"
   vpc_id      = aws_vpc.main.id
 
   # Regra de entrada: permite conexões na porta 5432
