@@ -19,4 +19,5 @@ variable "api_name" {
 variable "lambda_code_version" {
   description = "A versão do código (commit SHA) a ser implantada, vinda do CI/CD."
   type        = string
+  default     = "latest"
 }
