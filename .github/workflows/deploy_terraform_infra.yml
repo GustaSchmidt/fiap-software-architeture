@@ -9,11 +9,11 @@ on:
       - 'lambda_auth_cpf/**'
 
   pull_request:
-    # branches:
-    #   - main
-    # paths:
-    #   - 'terraform/**'
-    #   - 'lambda_auth_cpf/**'
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'lambda_auth_cpf/**'
 
 jobs:
   ###################################################
