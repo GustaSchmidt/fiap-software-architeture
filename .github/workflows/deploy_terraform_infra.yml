@@ -148,6 +148,22 @@ jobs:
           plan_output: ${{ steps.plan.outputs.plan_output }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Import Existing S3 Bucket
+        id: import-s3
+        working-directory: ./terraform/auth
+        env:
+           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+        run: |
+          echo "Verificando se o bucket já está no state..."
+          
+          # Tenta listar o recurso no state atual
+          if terraform state list | grep -q "aws_s3_bucket.lambda_artifacts"; then
+            echo "✅ O bucket já foi importado anteriormente. Pulando etapa."
+          else
+            echo "⚠️ Bucket não encontrado no state. Iniciando importação..."
+            terraform import aws_s3_bucket.lambda_artifacts fiap-soat-lambda-code-artifacts
+          fi
+
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
