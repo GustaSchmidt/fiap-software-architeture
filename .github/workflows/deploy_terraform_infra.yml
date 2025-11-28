@@ -100,7 +100,7 @@ jobs:
 
           # Expõe o nome do artefato para os outros jobs/passos
 
-          echo "s3_key=${S3_KEY}" >> $GITHUB_OUTPUT
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
 
         env:
           GITHUB_SHA: ${{ github.sha }}
@@ -126,7 +126,7 @@ jobs:
         working-directory: ./terraform/auth
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-          TF_VAR_lambda_code_version: ${{ steps.package-lambda.outputs.commit_sha }} # Passa a versão para o Terraform
+          TF_VAR_lambda_code_version: ${{ steps.package-lambda.outputs.commit_sha }}
 
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
