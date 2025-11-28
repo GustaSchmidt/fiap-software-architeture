@@ -140,6 +140,7 @@ jobs:
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_lambda_code_version: ${{ steps.package-lambda.outputs.commit_sha }}
+        continue-on-error: true
 
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
