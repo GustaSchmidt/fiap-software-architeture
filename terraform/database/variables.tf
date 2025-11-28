@@ -19,7 +19,7 @@ variable "db_name" {
 variable "db_username" {
   description = "Nome de usuário mestre para o banco de dados"
   type        = string
-  default     = "admin"
+  default     = "fiap_db_user_main"
 }
 
 variable "db_password" {
