@@ -1,0 +1,211 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'lambda_auth_cpf/**'
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'lambda_auth_cpf/**'
+
+jobs:
+  ###################################################
+  # Job 1: Descobre quais arquivos foram alterados  #
+  ###################################################
+  list-changed-files:
+    name: 'List Changed Files'
+    runs-on: ubuntu-latest
+    outputs:
+      auth_changed: ${{ steps.changed-auth-files.outputs.any_changed }}
+      database_changed: ${{ steps.changed-database-files.outputs.any_changed }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Check for changes in auth files
+        id: changed-auth-files
+        uses: tj-actions/changed-files@v44
+        with:
+          # O input correto é 'files'
+          files: |
+            terraform/auth/**
+            lambda_auth_cpf/**
+
+      - name: Check for changes in database files
+        id: changed-database-files
+        uses: tj-actions/changed-files@v44
+        with:
+          # Usamos a action uma segunda vez para o outro caminho
+          files: |
+            terraform/database/**
+
+  #########################################
+  # Job 2: Infra de Autenticação          #
+  #########################################
+  deploy-auth-infra:
+    name: 'Terraform Deploy Auth Infra'
+    needs: list-changed-files
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    # Condição corrigida para usar o output do passo correto
+    if: github.event_name == 'push' || needs.list-changed-files.outputs.auth_changed == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Package and Upload Lambda Code
+        id: package-lambda
+        run: |
+          # 1. Determina o nome da branch
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            # Fallback seguro ou usar github.ref_name para push
+            BRANCH_NAME="${{ github.ref_name }}" 
+          fi
+
+          # 2. Sanitiza (troca / por - e remove caracteres especiais)
+          BRANCH_NAME_SANITIZED=$(echo $BRANCH_NAME | sed 's/[^a-zA-Z0-9]/-/g')
+          
+          # 3. Pega o SHA de forma segura usando git (garante que não venha vazio)
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+
+          # 4. Define o SUFIXO da versão (Isso é o que o Terraform precisa!)
+          # Exemplo: minha-branch-a1b2c3d
+          VERSION_SUFFIX="${BRANCH_NAME_SANITIZED}-${COMMIT_SHA}"
+
+          S3_KEY="lambda-auth-${VERSION_SUFFIX}.zip"
+          BUCKET_NAME="fiap-soat-lambda-code-artifacts"
+
+          echo "--- Debug Infos ---"
+          echo "Branch: $BRANCH_NAME_SANITIZED"
+          echo "SHA: $COMMIT_SHA"
+          echo "Sufixo enviado ao TF: $VERSION_SUFFIX"
+          echo "Arquivo S3: $S3_KEY"
+
+          # Zipa
+          cd lambda_auth_cpf
+          zip -r ../${S3_KEY} . -x "*node_modules*"
+          cd ..
+          
+          # Upload
+          aws s3 cp ${S3_KEY} s3://${BUCKET_NAME}/${S3_KEY}
+
+          # 5. O PULO DO GATO:
+          # Envia o SUFIXO COMPLETO para o Terraform, para bater com a chave S3
+          echo "commit_sha=$VERSION_SUFFIX" >> $GITHUB_OUTPUT
+
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform/auth
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          PLAN_OUTPUT=$(terraform plan -no-color -input=false)
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/auth
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_lambda_code_version: ${{ steps.package-lambda.outputs.commit_sha }}
+
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/post-terraform-plan
+        with:
+          plan_output: ${{ steps.plan.outputs.plan_output }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/auth
+        env:
+           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+  #########################################
+  # Job 3: Infra do Banco de Dados        #
+  #########################################
+  deploy-database-infra:
+    name: 'Terraform Deploy Database Infra'
+    needs: [deploy-auth-infra, list-changed-files]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    # Condição corrigida para usar o output do passo correto
+    if: github.event_name == 'push' || needs.list-changed-files.outputs.database_changed == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform/database
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          PLAN_OUTPUT=$(terraform plan -no-color -input=false)
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/database
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+        continue-on-error: true
+
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/post-terraform-plan
+        with:
+          plan_output: ${{ steps.plan.outputs.plan_output }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/database
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
