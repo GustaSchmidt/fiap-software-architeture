@@ -25,6 +25,7 @@ jobs:
     outputs:
       auth_changed: ${{ steps.changed-auth-files.outputs.any_changed }}
       database_changed: ${{ steps.changed-database-files.outputs.any_changed }}
+      k8s_changed: ${{ steps.changed-k8s-files.outputs.any_changed }}
       
     steps:
       - name: Checkout code
@@ -48,6 +49,14 @@ jobs:
           # Usamos a action uma segunda vez para o outro caminho
           files: |
             terraform/database/**
+      
+      - name: Check for changes in kubernetes files
+        id: changed-k8s-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            terraform/kubernetes/**
+            kubernetes/**
 
   #########################################
   # Job 2: Infra de Autenticação          #
@@ -211,3 +220,57 @@ jobs:
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+  #########################################
+  # Job 4: Infra do Cluster Kubernets     #
+  #########################################
+  deploy-kubernetes-infra:
+    name: 'Terraform Deploy K8s Infra'
+    needs: [deploy-database-infra, list-changed-files]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    if: |
+      github.event_name == 'push' || 
+      needs.list-changed-files.outputs.k8s_changed == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform/kubernetes
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          PLAN_OUTPUT=$(terraform plan -no-color -input=false 2>&1)
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/kubernetes
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+        continue-on-error: true
+
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/post-terraform-plan
+        with:
+          plan_output: ${{ steps.plan.outputs.plan_output }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/kubernetes
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
