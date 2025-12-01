@@ -226,14 +226,14 @@ jobs:
   #########################################
   deploy-kubernetes-infra:
     name: 'Terraform Deploy K8s Infra'
-    needs: [deploy-database-infra, list-changed-files]
+    # needs: [deploy-database-infra, list-changed-files]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
 
-    if: |
-      github.event_name == 'push' || 
-      needs.list-changed-files.outputs.k8s_changed == 'true'
+    # if: |
+    #   github.event_name == 'push' || 
+    #   needs.list-changed-files.outputs.k8s_changed == 'true'
 
     steps:
       - name: Checkout
