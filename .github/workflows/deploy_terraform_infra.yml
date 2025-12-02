@@ -171,7 +171,7 @@ jobs:
   #########################################
   deploy-database-infra:
     name: 'Terraform Deploy Database Infra'
-    needs: [deploy-auth-infra, list-changed-files]
+    # needs: [deploy-auth-infra, list-changed-files]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
