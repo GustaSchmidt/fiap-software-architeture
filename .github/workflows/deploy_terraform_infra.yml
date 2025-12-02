@@ -177,7 +177,7 @@ jobs:
       pull-requests: write
 
     # Condição corrigida para usar o output do passo correto
-    if: github.event_name == 'push' || needs.list-changed-files.outputs.database_changed == 'true'
+    # if: github.event_name == 'push' || needs.list-changed-files.outputs.database_changed == 'true'
 
     steps:
       - name: Checkout
