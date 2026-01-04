@@ -23,6 +23,9 @@ exports.handler = async (event) => {
         user: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_DATABASE,
+        ssl: {
+            rejectUnauthorized: false 
+        }
     };
 
     const client = new Client(dbConfig);
@@ -30,6 +33,20 @@ exports.handler = async (event) => {
 
     try {
         await client.connect();
+
+        // Cria tabela se nao existir
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS clients (
+                id SERIAL PRIMARY KEY,
+                cpf VARCHAR(14) UNIQUE NOT NULL,
+                nome VARCHAR(255) NULL,       -- Permitir NULL pois a Lambda não envia (app que se vire para garantir isso)
+                sobrenome VARCHAR(255) NULL,  -- Permitir NULL
+                email VARCHAR(255) NULL,      -- Permitir NULL
+                senha VARCHAR(255) NULL,      -- Permitir NULL
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
 
         // 1. Verifica se o cliente com o CPF fornecido já existe.
         const result = await client.query('SELECT id FROM clients WHERE cpf = $1', [cpf]);
