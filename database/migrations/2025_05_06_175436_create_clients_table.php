@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('nome')->nullable();
             $table->string('sobrenome')->nullable();
-            $table->string('email')->nullable()->change();
+            $table->string('email')->nullable();
             $table->string('cpf')->unique();
-            $table->string('senha')->nullable()->change(); // armazenar hash md5
+            $table->string('senha')->nullable(); // armazenar hash md5
             $table->timestamps();
         });
     }
