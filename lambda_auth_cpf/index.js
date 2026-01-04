@@ -15,6 +15,7 @@ exports.handler = async (event) => {
         };
     }
 
+    
     // Configurações de conexão com o banco de dados.
     const dbConfig = {
         host: process.env.DB_HOST,
