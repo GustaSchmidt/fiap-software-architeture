@@ -167,7 +167,8 @@ jobs:
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_lambda_code_version: ${{ steps.package-lambda.outputs.commit_sha }}
-
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          
   #########################################
   # Job 3: Infra do Banco de Dados        #
   #########################################
