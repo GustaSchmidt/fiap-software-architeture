@@ -1,12 +1,24 @@
-# Configura o Terraform Cloud para o workspace de autenticação
+# Configura o Terraform Cloud para o workspaces de autenticação e leitura do workspace de banco de dados
 terraform {
   cloud {
     organization = "FIAP-SOAT-ORG"
     workspaces {
-      name = "fiap-soat-auth" # CORRIGIDO: Aponta para o workspace correto
+      name = "fiap-soat-auth"
     }
   }
 }
+
+data "terraform_remote_state" "db" {
+  backend = "remote"
+
+  config = {
+    organization = "FIAP-SOAT-ORG"
+    workspaces = {
+      name = "fiap-soat-database"
+    }
+  }
+}
+
 
 # Configura o provedor da AWS
 provider "aws" {
@@ -62,12 +74,12 @@ resource "aws_lambda_function" "auth_lambda" {
   # Você irá preencher estas variáveis no Terraform Cloud
   environment {
     variables = {
-      DB_HOST     = "DEFINIDA_NO_TERRAFORM_CLOUD"
-      DB_PORT     = "5432"
-      DB_DATABASE = "DEFINIDA_NO_TERRAFORM_CLOUD"
-      DB_USERNAME = "DEFINIDA_NO_TERRAFORM_CLOUD"
-      DB_PASSWORD = "DEFINIDA_NO_TERRAFORM_CLOUD"
-      JWT_SECRET  = "DEFINIDA_NO_TERRAFORM_CLOUD"
+      DB_HOST     = data.terraform_remote_state.db.outputs.db_host
+      DB_PORT     = data.terraform_remote_state.db.outputs.db_port
+      DB_DATABASE = data.terraform_remote_state.db.outputs.db_name
+      DB_USERNAME = data.terraform_remote_state.db.outputs.db_username
+      DB_PASSWORD = data.terraform_remote_state.db.outputs.db_password
+      JWT_SECRET  = var.jwt_secret
     }
   }
 }

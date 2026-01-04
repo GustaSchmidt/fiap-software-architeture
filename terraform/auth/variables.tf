@@ -21,3 +21,9 @@ variable "lambda_code_version" {
   type        = string
   default     = "latest"
 }
+
+variable "jwt_secret" {
+  description = "Chave secreta para assinar os tokens JWT"
+  type        = string
+  sensitive   = true
+}
