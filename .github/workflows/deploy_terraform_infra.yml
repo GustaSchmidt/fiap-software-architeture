@@ -277,3 +277,55 @@ jobs:
         working-directory: ./terraform/kubernetes
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+  #########################################
+  # Job 5: Infra do Cluster Kubernets     #
+  #########################################
+  deploy-k8s-app:
+    name: 'Deploy App to EKS'
+    needs: deploy-kubernetes-infra # IMPORTANTE: Espera o cluster estar pronto
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update Kubeconfig
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name fiap-soat-cluster
+
+      - name: Create Database Secret
+        run: |
+          kubectl create secret generic db-credentials \
+            --from-literal=DB_HOST=${{ secrets.DB_HOST }} \
+            --from-literal=DB_PORT=5432 \
+            --from-literal=DB_DATABASE=fiap_soat \
+            --from-literal=DB_USERNAME=fiap_db_user_main \
+            --from-literal=DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy Manifests
+        run: |
+          kubectl apply -f kubernets/configmap.yaml
+          kubectl apply -f kubernets/redis-deployment.yaml
+          kubectl apply -f kubernets/redis-service.yaml
+          kubectl apply -f kubernets/deployment.yaml # Sua aplicação
+          kubectl apply -f kubernets/service.yaml    # LoadBalancer
+          kubectl apply -f kubernets/hpa.yaml        # Escalonamento
+
+      - name: Restart Deployment
+        run: |
+          kubectl rollout restart deployment/fiap-app
