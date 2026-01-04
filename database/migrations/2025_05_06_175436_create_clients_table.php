@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->string('nome');
-            $table->string('sobrenome');
-            $table->string('email')->unique();
+            $table->string('nome')->nullable();
+            $table->string('sobrenome')->nullable();
+            $table->string('email')->nullable()->change();
             $table->string('cpf')->unique();
-            $table->string('senha'); // armazenar hash md5
+            $table->string('senha')->nullable()->change(); // armazenar hash md5
             $table->timestamps();
         });
     }
