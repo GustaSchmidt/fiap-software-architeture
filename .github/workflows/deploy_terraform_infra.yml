@@ -62,8 +62,6 @@ jobs:
     permissions:
       pull-requests: write
 
-    if: github.event_name == 'push' || needs.list-changed-files.outputs.database_changed == 'true'
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,9 +114,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-
-    # Condição corrigida para usar o output do passo correto
-    if: github.event_name == 'push' || needs.list-changed-files.outputs.auth_changed == 'true'
 
     steps:
       - name: Checkout
@@ -227,8 +222,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-
-    if: github.event_name == 'push' || needs.list-changed-files.outputs.k8s_changed == 'true'
 
     steps:
       - name: Checkout
