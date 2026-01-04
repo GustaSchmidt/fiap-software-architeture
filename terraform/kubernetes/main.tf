@@ -35,7 +35,7 @@ module "eks" {
   version = "~> 19.0"
 
   cluster_name    = "fiap-soat-cluster"
-  cluster_version = "1.27"
+  cluster_version = "1.30"
 
   # Usa a VPC e Subnets que vieram do outro workspace
   vpc_id     = data.terraform_remote_state.database.outputs.vpc_id
@@ -67,7 +67,7 @@ module "eks" {
 resource "aws_ecr_repository" "app_repo" {
   name                 = "fiap-soat-app"
   image_tag_mutability = "MUTABLE"
-  force_delete         = true # Permite destruir o repo mesmo com imagens (como se trata de um repo de estudo ta suave em prod segura a onda)
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
