@@ -57,7 +57,7 @@ jobs:
   #########################################
   deploy-database-infra:
     name: 'Terraform Deploy Database Infra'
-    needs: [list-changed-files]
+    # needs: [list-changed-files]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -112,7 +112,7 @@ jobs:
   #########################################
   deploy-auth-infra:
     name: 'Terraform Deploy Auth Infra'
-    needs: [list-changed-files, deploy-database-infra]
+    needs: [deploy-database-infra]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -223,14 +223,12 @@ jobs:
   #########################################
   deploy-kubernetes-infra:
     name: 'Terraform Deploy K8s Infra'
-    needs: [deploy-database-infra, list-changed-files]
+    needs: [deploy-database-infra]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
 
-    if: |
-      github.event_name == 'push' || 
-      needs.list-changed-files.outputs.k8s_changed == 'true'
+    if: github.event_name == 'push' || needs.list-changed-files.outputs.k8s_changed == 'true'
 
     steps:
       - name: Checkout
@@ -277,7 +275,7 @@ jobs:
   #########################################
   deploy-k8s-app:
     name: 'Deploy App to EKS'
-    needs: [deploy-kubernetes-infra, list-changed-files]
+    needs: [deploy-kubernetes-infra]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
