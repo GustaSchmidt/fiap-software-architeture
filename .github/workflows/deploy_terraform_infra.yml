@@ -112,15 +112,16 @@ jobs:
           echo "Sufixo enviado ao TF: $VERSION_SUFFIX"
           echo "Arquivo S3: $S3_KEY"
 
-          # Zipa
+          # 5. Instala dependencias e zipa tudo
           cd lambda_auth_cpf
-          zip -r ../${S3_KEY} . -x "*node_modules*"
+          npm install --production
+          zip -r ../${S3_KEY} .
           cd ..
           
-          # Upload
+          # 6. Upload
           aws s3 cp ${S3_KEY} s3://${BUCKET_NAME}/${S3_KEY}
 
-          # 5. O PULO DO GATO:
+          # 7. O PULO DO GATO:
           # Envia o SUFIXO COMPLETO para o Terraform, para bater com a chave S3
           echo "commit_sha=$VERSION_SUFFIX" >> $GITHUB_OUTPUT
 
