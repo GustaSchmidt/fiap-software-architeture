@@ -4,16 +4,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'terraform/**'
-      - 'lambda_auth_cpf/**'
 
   pull_request:
     branches:
       - main
-    paths:
-      - 'terraform/**'
-      - 'lambda_auth_cpf/**'
 
 jobs:
   ###################################################
@@ -322,9 +316,9 @@ jobs:
           kubectl apply -f kubernets/configmap.yaml
           kubectl apply -f kubernets/redis-deployment.yaml
           kubectl apply -f kubernets/redis-service.yaml
-          kubectl apply -f kubernets/deployment.yaml # Sua aplicação
-          kubectl apply -f kubernets/service.yaml    # LoadBalancer
-          kubectl apply -f kubernets/hpa.yaml        # Escalonamento
+          kubectl apply -f kubernets/deployment.yaml
+          kubectl apply -f kubernets/service.yaml
+          kubectl apply -f kubernets/hpa.yaml
 
       - name: Restart Deployment
         run: |
