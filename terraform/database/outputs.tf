@@ -36,3 +36,8 @@ output "subnet_ids" {
   description = "List of IDs for the database subnets"
   value       = [aws_subnet.db_subnet_a.id, aws_subnet.db_subnet_b.id]
 }
+
+output "vpc_id" {
+  description = "ID da VPC onde o banco está localizado"
+  value       = aws_vpc.main.id
+}

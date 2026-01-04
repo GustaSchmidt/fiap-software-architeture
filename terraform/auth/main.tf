@@ -57,8 +57,27 @@ resource "aws_iam_role" "lambda_exec_role" {
 # Anexa a política básica de execução da Lambda à role criada
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
+
+#Security Group específico para a Lambda
+resource "aws_security_group" "lambda_sg" {
+  name        = "auth-lambda-sg"
+  description = "Security Group para a Lambda de Auth"
+  vpc_id      = data.terraform_remote_state.db.outputs.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  tags = {
+    Name = "auth-lambda-sg"
+  }
+}
+
 
 # Cria a função Lambda, apontando para o código no S3
 resource "aws_lambda_function" "auth_lambda" {
@@ -71,7 +90,12 @@ resource "aws_lambda_function" "auth_lambda" {
   s3_bucket = aws_s3_bucket.lambda_artifacts.id
   s3_key    = "lambda-auth-${var.lambda_code_version}.zip"
 
-  # Você irá preencher estas variáveis no Terraform Cloud
+  vpc_config {
+    subnet_ids         = data.terraform_remote_state.db.outputs.subnet_ids
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
+
+  # Envs de conexão com o banco de dados e JWT (transformar isso em secrets seria melhor)
   environment {
     variables = {
       DB_HOST     = data.terraform_remote_state.db.outputs.db_host
@@ -82,6 +106,7 @@ resource "aws_lambda_function" "auth_lambda" {
       JWT_SECRET  = var.jwt_secret
     }
   }
+
 }
 
 
