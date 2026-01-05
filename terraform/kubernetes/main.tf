@@ -37,22 +37,21 @@ module "eks" {
   cluster_name    = "fiap-soat-cluster"
   cluster_version = "1.30"
 
-  # Usa a VPC e Subnets que vieram do outro workspace
   vpc_id     = data.terraform_remote_state.database.outputs.vpc_id
   subnet_ids = data.terraform_remote_state.database.outputs.subnet_ids
 
-  # Endpoint público para você conseguir rodar comandos kubectl da sua máquina/pipeline
   cluster_endpoint_public_access = true
 
-  # Criação dos nós (máquinas) do cluster
   eks_managed_node_groups = {
     default = {
       min_size     = 1
       max_size     = 2
       desired_size = 1
-
       instance_types = ["t3.small"]
       capacity_type  = "ON_DEMAND"
+      network_interfaces = [{
+        associate_public_ip_address = true
+      }]
     }
   }
 
@@ -63,7 +62,7 @@ module "eks" {
 }
 
 # --- Repositório ECR (Docker Registry) ---
-# Criamos aqui para guardar as imagens da aplicação
+# Como atualizo toda vez que faço push pode ir pro saco sem dó
 resource "aws_ecr_repository" "app_repo" {
   name                 = "fiap-soat-app"
   image_tag_mutability = "MUTABLE"
