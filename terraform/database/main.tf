@@ -25,6 +25,14 @@ resource "aws_vpc" "main" {
   }
 }
 
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "fiap-soat-igw"
+  }
+}
+
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
