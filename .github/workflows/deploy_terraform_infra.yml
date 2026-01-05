@@ -317,4 +317,4 @@ jobs:
 
       - name: Restart Deployment
         run: |
-          kubectl rollout restart deployment/fiap-app
+          kubectl rollout restart deployment/fiap-app || true
