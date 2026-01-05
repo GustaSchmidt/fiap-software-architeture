@@ -237,7 +237,6 @@ jobs:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
       - name: Sleep to avoid other concurrent runs on Terraform Cloud
-        run: terraform init
         run: |
           sleep 10
 
