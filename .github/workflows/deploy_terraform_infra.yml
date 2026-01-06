@@ -344,11 +344,11 @@ jobs:
           echo "========================================================"
 
           echo "🔄 Enviando comando 'set image' para o Cluster..."
-          kubectl set image deployment/fiap-app fiap-app=${{ env.FULL_IMAGE }}
+          kubectl set image deployment/fiap-app soat-app=${{ env.FULL_IMAGE }}
 
           echo "⏳ Aguardando estabilização dos Pods (Rollout Status)..."
           
-          if kubectl rollout status deployment/fiap-app --timeout=5m; then
+          if kubectl rollout status deployment/fiap-app --timeout=15m; then
             echo "✅ Rollout concluído com SUCESSO!"
           else
             echo "❌ O Rollout falhou ou demorou demais!"
