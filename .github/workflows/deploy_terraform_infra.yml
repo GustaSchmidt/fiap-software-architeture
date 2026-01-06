@@ -122,7 +122,7 @@ jobs:
           DB_USER=$(terraform output -raw db_username)
 
           # Daqui para frente, sempre que essas strings aparecerem no log, serão trocadas por ***
-          echo "::add-mask::$DB_HOST"
+          echo "::add-mask::$DB_HOST"git pull origin deploy_k8_aws --no-rebase && git push origin deploy_k8_aws
           echo "::add-mask::$DB_PORT"
           echo "::add-mask::$DB_NAME"
           echo "::add-mask::$DB_USER"
