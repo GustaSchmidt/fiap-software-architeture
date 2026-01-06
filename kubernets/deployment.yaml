@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: soat-app-deployment
+  name: fiap-app
   labels:
     app: soat-app
 spec:
