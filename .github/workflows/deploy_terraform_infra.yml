@@ -122,14 +122,14 @@ jobs:
           DB_USER=$(terraform output -raw db_username)
 
           # Daqui para frente, sempre que essas strings aparecerem no log, serão trocadas por ***
-          echo "::add-mask::$DB_HOST"
+          echo "::add-mask::$DB_HOST"git pull origin deploy_k8_aws --no-rebase && git push origin deploy_k8_aws
           echo "::add-mask::$DB_PORT"
           echo "::add-mask::$DB_NAME"
           echo "::add-mask::$DB_USER"
 
           # Pega os valores brutos (-raw) do terraform e joga no output do GitHub
-          echo "db_host=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
-          echo "db_port=$(terraform output -raw rds_port)" >> $GITHUB_OUTPUT
+          echo "db_host=$(terraform output -raw db_host)" >> $GITHUB_OUTPUT
+          echo "db_port=$(terraform output -raw db_port)" >> $GITHUB_OUTPUT
           echo "db_name=$(terraform output -raw db_name)" >> $GITHUB_OUTPUT
           echo "db_user=$(terraform output -raw db_username)" >> $GITHUB_OUTPUT
 
