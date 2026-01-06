@@ -57,10 +57,16 @@ jobs:
   #########################################
   deploy-database-infra:
     name: 'Terraform Deploy Database Infra'
-    # needs: [list-changed-files]
+    needs: [list-changed-files]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+    
+    outputs:
+      db_host: ${{ steps.tf-outputs.outputs.db_host }}
+      db_port: ${{ steps.tf-outputs.outputs.db_port }}
+      db_name: ${{ steps.tf-outputs.outputs.db_name }}
+      db_user: ${{ steps.tf-outputs.outputs.db_user }}
 
     steps:
       - name: Checkout
@@ -104,6 +110,26 @@ jobs:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
+      - name: Extract Terraform Outputs
+        id: tf-outputs
+        working-directory: ./terraform/database
+        run: |
+          DB_HOST=$(terraform output -raw rds_endpoint)
+          DB_PORT=$(terraform output -raw rds_port)
+          DB_NAME=$(terraform output -raw db_name)
+          DB_USER=$(terraform output -raw db_username)
+
+          # Daqui para frente, sempre que essas strings aparecerem no log, serão trocadas por ***
+          echo "::add-mask::$DB_HOST"
+          echo "::add-mask::$DB_PORT"
+          echo "::add-mask::$DB_NAME"
+          echo "::add-mask::$DB_USER"
+
+          # Pega os valores brutos (-raw) do terraform e joga no output do GitHub
+          echo "db_host=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
+          echo "db_port=$(terraform output -raw rds_port)" >> $GITHUB_OUTPUT
+          echo "db_name=$(terraform output -raw db_name)" >> $GITHUB_OUTPUT
+          echo "db_user=$(terraform output -raw db_username)" >> $GITHUB_OUTPUT
 
   #########################################
   # Job 3: Infra de Autenticação          #
@@ -317,14 +343,28 @@ jobs:
         run: |
           aws eks update-kubeconfig --region us-east-1 --name fiap-soat-cluster
 
+      - name: Generate Random App Key
+        run: |
+          # Gera uma chave randômica de 32 bytes em base64
+          # O Laravel exige o prefixo "base64:"
+          RANDOM_KEY="base64:$(openssl rand -base64 32)"
+          
+          # 1. Mascara a chave (Segurança: troca por *** nos logs)
+          echo "::add-mask::$RANDOM_KEY"
+          
+          # 2. Salva na ENV do GitHub para os próximos passos usarem
+          echo "GENERATED_APP_KEY=$RANDOM_KEY" >> $GITHUB_ENV
+
       - name: Create Database Secret
         run: |
-          kubectl create secret generic db-credentials \
-            --from-literal=DB_HOST=${{ secrets.DB_HOST }} \
-            --from-literal=DB_PORT=5432 \
-            --from-literal=DB_DATABASE=fiap_soat \
-            --from-literal=DB_USERNAME=fiap_db_user_main \
-            --from-literal=DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          # Usamos o nome 'soat-secrets' e chaves minúsculas para bater com seu YAML
+          kubectl create secret generic soat-secrets \
+            --from-literal=db_host='${{ needs.deploy-database-infra.outputs.db_host }}' \
+            --from-literal=db_port='${{ needs.deploy-database-infra.outputs.db_port }}' \
+            --from-literal=db_database='${{ needs.deploy-database-infra.outputs.db_name }}' \
+            --from-literal=db_username='${{ needs.deploy-database-infra.outputs.db_user }}' \
+            --from-literal=db_password='${{ secrets.DB_PASSWORD }}' \
+            --from-literal=app_key='${{ env.GENERATED_APP_KEY }}' \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy Manifests
