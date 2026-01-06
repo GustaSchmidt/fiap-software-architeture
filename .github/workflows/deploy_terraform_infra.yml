@@ -116,8 +116,8 @@ jobs:
         id: tf-outputs
         working-directory: ./terraform/database
         run: |
-          DB_HOST=$(terraform output -raw rds_endpoint)
-          DB_PORT=$(terraform output -raw rds_port)
+          DB_HOST=$(terraform output -raw db_host)
+          DB_PORT=$(terraform output -raw db_port)
           DB_NAME=$(terraform output -raw db_name)
           DB_USER=$(terraform output -raw db_username)
 
