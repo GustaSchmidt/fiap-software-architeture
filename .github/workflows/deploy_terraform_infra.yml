@@ -113,6 +113,7 @@ jobs:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Extract Terraform Outputs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         id: tf-outputs
         working-directory: ./terraform/database
         run: |
@@ -128,10 +129,10 @@ jobs:
           echo "::add-mask::$DB_USER"
 
           # Pega os valores brutos (-raw) do terraform e joga no output do GitHub
-          echo "db_host=$(terraform output -raw db_host)" >> $GITHUB_OUTPUT
-          echo "db_port=$(terraform output -raw db_port)" >> $GITHUB_OUTPUT
-          echo "db_name=$(terraform output -raw db_name)" >> $GITHUB_OUTPUT
-          echo "db_user=$(terraform output -raw db_username)" >> $GITHUB_OUTPUT
+          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+          echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
+          echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
 
   #########################################
   # Job 3: Infra de Autenticação          #
