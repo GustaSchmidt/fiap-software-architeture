@@ -17,7 +17,7 @@ spec:
       containers:
       - name: soat-app
         image: soat-app:latest
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         env:
