@@ -287,6 +287,27 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fiap-soat-app
+          IMAGE_TAG: ${{ github.sha }} # <--- Usaremos o SHA do commit para versionar
+        run: |
+          # Build e Push com a TAG única do commit (Boa prática)
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # Também atualiza a latest (opcional, mas bom para cache)
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          # Salva a imagem completa com a TAG específica para usar no próximo passo
+          echo "FULL_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
@@ -315,14 +336,46 @@ jobs:
           kubectl apply -f kubernets/service.yaml
           kubectl apply -f kubernets/hpa.yaml
 
-      - name: Restart Deployment
+      - name: Update Image, Wait Rollout & Report
         run: |
-          echo "=== LISTANDO TODOS OS RECURSOS ==="
-          kubectl get all
+          echo "========================================================"
+          echo "🚀 INICIANDO ATUALIZAÇÃO DE IMAGEM"
+          echo "Imagem alvo: ${{ env.FULL_IMAGE }}"
+          echo "========================================================"
+
+          echo "🔄 Enviando comando 'set image' para o Cluster..."
+          kubectl set image deployment/fiap-app fiap-app=${{ env.FULL_IMAGE }}
+
+          echo "⏳ Aguardando estabilização dos Pods (Rollout Status)..."
           
-          echo "=== LISTANDO DEPLOYMENTS ==="
-          kubectl get deployments
+          if kubectl rollout status deployment/fiap-app --timeout=5m; then
+            echo "✅ Rollout concluído com SUCESSO!"
+          else
+            echo "❌ O Rollout falhou ou demorou demais!"
+            echo "🔍 Diagnóstico de Falha:"
+            kubectl get pods -l app=fiap-app
+            echo "--- Logs recentes dos pods ---"
+            kubectl logs -l app=fiap-app --tail=50 --all-containers=true
+            exit 1 # Força a falha do Job
+          fi
+
+          echo "========================================================"
+          echo "🎉 RELATÓRIO FINAL DO CLUSTER"
+          echo "========================================================"
           
-          echo "=== TENTANDO RESTART ==="
-          # Se o nome estiver errado na lista acima, ajuste aqui
-          kubectl rollout restart deployment/fiap-app || echo "Deployment nao encontrado, ignorando restart..."
+          echo "🔎 DEPLOYMENTS:"
+          kubectl get deployments -o wide
+          
+          echo ""
+          echo "🔎 PODS (Status atual):"
+          kubectl get pods -o wide
+          
+          echo ""
+          echo "🔎 SERVICES (Seu Link de Acesso):"
+          kubectl get services
+          
+          echo ""
+          echo "🔎 IMAGEM RODANDO AGORA:"
+          kubectl get deployment fiap-app -o jsonpath='{.spec.template.spec.containers[0].image}'
+          echo ""
+          echo "========================================================"
