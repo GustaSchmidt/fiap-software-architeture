@@ -7,12 +7,12 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: fiap-app
-  minReplicas: 2 # Número mínimo de réplicas
-  maxReplicas: 5 # Número máximo de réplicas
+  minReplicas: 2
+  maxReplicas: 5
   metrics:
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 70 # Aumentar réplicas se o uso de CPU exceder 70%
+        averageUtilization: 85
