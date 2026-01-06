@@ -317,4 +317,12 @@ jobs:
 
       - name: Restart Deployment
         run: |
-          kubectl rollout restart deployment/fiap-app || true
+          echo "=== LISTANDO TODOS OS RECURSOS ==="
+          kubectl get all
+          
+          echo "=== LISTANDO DEPLOYMENTS ==="
+          kubectl get deployments
+          
+          echo "=== TENTANDO RESTART ==="
+          # Se o nome estiver errado na lista acima, ajuste aqui
+          kubectl rollout restart deployment/fiap-app || echo "Deployment nao encontrado, ignorando restart..."
