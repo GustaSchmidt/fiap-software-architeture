@@ -417,8 +417,8 @@ jobs:
             fi
 
             # B) Verifica se tem Pods em estado CRÍTICO (Loop, Erro de Imagem, Config)
-            ERROR_PODS=$(kubectl get pods -l app=soat-app -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' | grep -E "CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError")
-
+            ERROR_PODS=$(kubectl get pods -l app=soat-app -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' | grep -E "CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError" || true)
+            
             if [ ! -z "$ERROR_PODS" ]; then
               echo "❌ ERRO CRÍTICO DETECTADO! Abortando deploy."
               echo "Os seguintes pods estão falhando:"
