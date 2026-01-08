@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: fiap-app-service
   labels:
-    app: fiap-app
+    app: soat-app
 spec:
   type: LoadBalancer
   selector:
-    app: fiap-app
+    app: soat-app
   ports:
   - protocol: TCP
     port: 80 
