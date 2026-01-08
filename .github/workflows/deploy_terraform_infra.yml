@@ -117,10 +117,15 @@ jobs:
           echo "Terraform Apply completed."
           echo "Extracting outputs..."
 
-          DB_HOST=$(terraform output -raw db_host)
-          DB_PORT=$(terraform output -raw db_port)
-          DB_NAME=$(terraform output -raw db_name)
-          DB_USER=$(terraform output -raw db_username)
+          DB_HOST=$(terraform output -raw db_host | tr -d '\n\r')
+          DB_PORT=$(terraform output -raw db_port | tr -d '\n\r')
+          DB_NAME=$(terraform output -raw db_name | tr -d '\n\r')
+          DB_USER=$(terraform output -raw db_username | tr -d '\n\r')
+
+          if [ -z "$DB_HOST" ]; then
+            echo "ERRO: Terraform output db_host retornou vazio!"
+            exit 1
+          fi
 
           # Daqui para frente, sempre que essas strings aparecerem no log, serão trocadas por ***
           echo "::add-mask::$DB_HOST"
