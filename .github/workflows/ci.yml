@@ -1,4 +1,4 @@
-name: Deploy Infrastructure
+name: Deploy Infrastructure And APPs (CI)
 
 on:
   push:
@@ -132,12 +132,6 @@ jobs:
             echo "ERRO: Terraform output db_host retornou vazio!"
             exit 1
           fi
-
-          # Daqui para frente, sempre que essas strings aparecerem no log, serão trocadas por ***
-          # echo "::add-mask::$DB_HOST"
-          # echo "::add-mask::$DB_PORT"
-          # echo "::add-mask::$DB_NAME"
-          # echo "::add-mask::$DB_USER"
 
           # Pega os valores brutos (-raw) do terraform e joga no output do GitHub
           echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
@@ -315,6 +309,8 @@ jobs:
     needs: [deploy-kubernetes-infra, deploy-database-infra]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      load_balancer_url: ${{ steps.get-url.outputs.lb_url }}
 
     steps:
       - name: Checkout
@@ -462,6 +458,22 @@ jobs:
           kubectl get deployment fiap-app -o jsonpath='{.spec.template.spec.containers[0].image}'
           echo ""
           echo "========================================================"
+      
+      - name: Get LoadBalancer URL
+        id: get-url
+        run: |
+          # Pega o hostname do LoadBalancer direto do Kubernetes
+          LB_HOSTNAME=$(kubectl get service fiap-app-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          
+          # Se vier vazio (ainda provisionando), coloca uma mensagem de aviso
+          if [ -z "$LB_HOSTNAME" ]; then
+            LB_HOSTNAME="Ainda em provisionamento (verifique no AWS Console)"
+          else
+            LB_HOSTNAME="http://$LB_HOSTNAME"
+          fi
+          
+          echo "URL detectada: $LB_HOSTNAME"
+          echo "lb_url=$LB_HOSTNAME" >> $GITHUB_OUTPUT
 
   #########################################
   # Job 6: Debug Automático (Só se falhar)#
@@ -525,3 +537,51 @@ jobs:
             
             echo ""
           done
+  
+  #########################################
+  # Job 7: Criar Release no GitHub        #
+  #########################################
+  create-release:
+    name: 'Create GitHub Release'
+    needs: [deploy-k8s-app]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Release using GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_URL: ${{ needs.deploy-k8s-app.outputs.load_balancer_url }}
+        run: |
+          TAG_NAME="v1.0.${{ github.run_number }}"
+          
+          # Cria o texto da Release
+          # EOF permite escrever múltiplas linhas
+          cat <<EOF > release_notes.md
+          ## 🚀 Deploy Realizado com Sucesso!
+          
+          A nova versão da aplicação **Food Delivery** já está online.
+          
+          ### 🔗 Link de Acesso
+          👉 **[Acessar Aplicação]($APP_URL)** ($APP_URL)
+          
+          ### 📦 Detalhes Técnicos
+          - **Versão:** $TAG_NAME
+          - **Commit:** ${{ github.sha }}
+          - **Autor:** @${{ github.actor }}
+          
+          ---
+          *Deploy automatizado via GitHub Actions*
+          EOF
+
+          # Cria a Release usando o CLI nativo
+          # --generate-notes: Adiciona automaticamente a lista de PRs/Commits mudados
+          gh release create "$TAG_NAME" \
+            --title "Release $TAG_NAME" \
+            --notes-file release_notes.md \
+            --make-latest
