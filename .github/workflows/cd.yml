@@ -1,4 +1,4 @@
-name: Deploy Infrastructure And APPs (CI)
+name: Deploy Infrastructure And APPs (CD)
 
 on:
   push:
@@ -584,4 +584,4 @@ jobs:
           gh release create "$TAG_NAME" \
             --title "Release $TAG_NAME" \
             --notes-file release_notes.md \
-            --make-latest
+            --latest
