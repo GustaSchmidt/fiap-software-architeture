@@ -282,7 +282,7 @@ jobs:
           echo "plan_output<<EOF" >> $GITHUB_OUTPUT
           echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructureterraform/kubernetes
+        working-directory: ./infrastructure/terraform/kubernetes
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
         continue-on-error: true
