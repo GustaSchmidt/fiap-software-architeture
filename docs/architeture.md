@@ -1,72 +1,47 @@
-# Estrutura do Projeto Laravel com Arquitetura Hexagonal
+# 🏗️ Arquitetura de Software - Food Delivery
 
-Este projeto segue a arquitetura hexagonal (Ports and Adapters), com o objetivo de separar claramente as regras de negócio da infraestrutura, facilitando testes, manutenção e evolução.
+Este documento descreve a arquitetura de alto nível do sistema de Food Delivery, detalhando seus componentes, decisões de design e a estrutura de organização do código (Monorepo).
 
----
+## 🔭 Visão Geral
 
-## 📁 Estrutura de Pastas
+O sistema foi arquitetado seguindo princípios **Cloud-Native**, utilizando containers orquestrados via Kubernetes (EKS), funções Serverless para autenticação isolada e Banco de Dados gerenciado (RDS), tudo provisionado via Infraestrutura como Código (Terraform).
 
-Abaixo está a descrição das principais pastas utilizadas no projeto, organizadas por responsabilidade.
+### Diagrama de Container (C4 Level 2)
 
-### `app/Domain/`
-Contém a **lógica de negócio central** da aplicação.
+```mermaid
+graph TD
+    User((Cliente))
+    ext_mp[Mercado Pago API]
 
-- `Entities/` – Classes que representam os modelos do domínio (ex: `Client.php`).
-- `Repositories/` – Interfaces que definem os contratos para persistência (ex: `ClientRepositoryInterface.php`).
+    subgraph "AWS Cloud (us-east-1)"
+        subgraph "Serverless Layer"
+            LambdaAuth[Lambda: Auth CPF]
+        end
 
-### `app/Adapters/`
-Implementações concretas das portas de entrada/saída (adapters externos).
+        subgraph "Kubernetes Cluster (EKS)"
+            LB[AWS Load Balancer]
+            App[Pod: Core API (Laravel)]
+            HPA[Horizontal Pod Autoscaler]
+        end
 
-- `Repositories/` – Repositórios que implementam as interfaces definidas no domínio, utilizando Eloquent ou outra tecnologia (ex: `EloquentClientRepository.php`).
+        subgraph "Data Layer"
+            RDS[(Amazon RDS: PostgreSQL)]
+            ElastiCache[(Redis Cache)]
+        end
+        
+        S3[S3 Bucket: Terraform State]
+    end
 
-### `app/Services/`
-Contém os **casos de uso da aplicação**. Esses serviços orquestram o fluxo entre o domínio e os adaptadores, sem depender de frameworks.
-
-- Ex: `ClientService.php` trata a lógica para criação e listagem de clientes.
-
-### `app/Http/`
-Camada responsável pela **entrada via HTTP**.
-
-- `Controllers/` – Recebem as requisições HTTP e delegam a lógica para os serviços (ex: `ClientController.php`).
-- `Requests/` – Validam os dados recebidos via HTTP (ex: `StoreClientRequest.php`).
-
-### `routes/`
-Define os **pontos de entrada da aplicação via HTTP**.
-
-- `api.php` – Arquivo onde são registradas as rotas da API REST (ex: POST `/clients`, GET `/clients`).
-
----
-
-## 🔄 Fluxo da Requisição
-
-1. A requisição chega via rota definida em `routes/api.php`.
-2. A rota aciona um controlador localizado em `Http/Controllers/`.
-3. O controlador chama um serviço em `Services/`, passando os dados validados da `Request/`.
-4. O serviço executa a lógica de negócio usando uma entidade e um repositório do `Domain/`.
-5. O repositório é uma interface, implementada por um adapter em `Adapters/Repositories/`.
-
----
-
-## ✅ Boas Práticas
-
-- **Domínio deve ser puro**: sem dependências externas (Laravel, Eloquent, etc).
-- **Use interfaces** no domínio e implemente-as nos adaptadores.
-- **Validações** devem ficar nas classes de `Http/Requests/`.
-- **Serviços** não devem conhecer HTTP ou detalhes de implementação.
-- **Controladores** devem ser simples: apenas receber, validar e repassar.
-
----
-
-## 🔌 Bind de Repositórios
-
-O binding entre interfaces do domínio e suas implementações deve ser feito no `AppServiceProvider`:
-
-```php
-use App\Domain\Repositories\ClientRepositoryInterface;
-use App\Adapters\Repositories\EloquentClientRepository;
-
-public function register()
-{
-    $this->app->bind(ClientRepositoryInterface::class, EloquentClientRepository::class);
-}
-```
+    %% Fluxos
+    User -->|HTTPS/Traffic| LB
+    LB -->|Routing| App
+    App -->|Read/Write| RDS
+    App -->|Cache| ElastiCache
+    App -->|Payment Webhooks| ext_mp
+    
+    %% Auth Flow
+    User -.->|Login/Identify| LambdaAuth
+    LambdaAuth -.->|Return Token/JWT| User
+    
+    %% Auto Scaling
+    HPA -.->|Monitor CPU/RAM| App

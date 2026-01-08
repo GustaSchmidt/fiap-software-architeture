@@ -1,194 +1,114 @@
-# fiap-software-architeture
+# 🍔 FIAP Tech Challenge - Food Delivery API
 
-# SOAT Tech Challenge - Fast Food (FASE 2)
+Projeto desenvolvido como parte do Tech Challenge da Pós-Graduação em Arquitetura de Software da FIAP. O sistema consiste em uma API de gerenciamento de pedidos para uma lanchonete, utilizando arquitetura de microsserviços e práticas modernas de DevOps.
 
-## 🧾 Descrição do Projeto
+## 🏛️ Arquitetura do Projeto (Monorepo)
 
-Este projeto tem como objetivo desenvolver o backend de um sistema de autoatendimento para uma lanchonete em expansão, buscando resolver os problemas de controle de pedidos e melhorar a experiência dos clientes. O sistema permitirá ao cliente montar seu combo, realizar o pagamento via QRCode do Mercado Pago e acompanhar o status do pedido em tempo real.
+Este repositório adota uma estrutura de **Monorepo** para centralizar o código da aplicação, infraestrutura e funções serverless.
 
-## 🎯 Funcionalidades
+```text
+.
+├── infrastructure/        # IaC (Infrastructure as Code)
+│   ├── kubernetes/        # Manifestos K8s (Deployments, Services, HPA)
+│   └── terraform/         # Provisionamento AWS (EKS, RDS, S3, Auth)
+├── serverless/            # Funções AWS Lambda
+│   └── auth-cpf/          # Lambda de Autenticação de Cliente
+└── services/              # Microsserviços da Aplicação
+    └── core-api/          # API Principal (Laravel/PHP 8.4)
 
-### Cliente
-- Cadastro com nome, e-mail e CPF (opcional)
-- Montagem de pedido com as etapas:
-  - Lanche
-  - Acompanhamento
-  - Bebida
-  - Sobremesa
-- Pagamento via QRCode (Mercado Pago)
-- Acompanhamento do status do pedido:
-  - Recebido
-  - Em preparação
-  - Pronto
-  - Finalizado
+```
 
-### Administrador
-- Gerenciamento de clientes
-- Cadastro, edição e remoção de produtos
-- Organização de produtos por categorias fixas:
-  - Lanche
-  - Acompanhamento
-  - Bebida
-  - Sobremesa
-- Acompanhamento de pedidos e seus tempos de espera
+---
 
-## 🏗️ Tecnologias e Arquitetura
+## 🚀 Como Rodar Localmente
 
-- Backend monolítico
-- Arquitetura Hexagonal
-- APIs RESTful documentadas via Swagger
-- Banco de dados à escolha (com controle de fila de pedidos)
-- Docker + Docker Compose
-
-## 📦 Endpoints da API
-
-Endpoints documentados em swagger no /public/swagger.json
-
-## 🚀 Como Executar o Projeto Localmente
+Como o projeto está segregado, você deve acessar a pasta do serviço específico para rodá-lo.
 
 ### Pré-requisitos
-- Docker
-- Docker Compose
 
-### Passos
+* Docker e Docker Compose instalados.
+* Git instalado.
 
+### Passo a Passo
+
+1. **Clone o repositório:**
 ```bash
-# Clone o repositório
-git clone https://github.com/GustaSchmidt/fiap-software-architeture.git
+git clone [https://github.com/GustaSchmidt/fiap-software-architeture.git](https://github.com/GustaSchmidt/fiap-software-architeture.git)
 cd fiap-software-architeture
 
-# Crie o Arquivo .env
-# Atualize as variáveis de ambiente do arquivo .env de acordo com seu ambiente
+```
+
+
+2. **Acesse a pasta da API Principal:**
+```bash
+cd services/core-api
+
+```
+
+
+3. **Configure as Variáveis de Ambiente:**
+```bash
 cp .env.example .env
 
-# Suba os containers do projeto
-docker compose up --build
-
-# Para acessar o container pra casos de debug
-docker compose exec app bash
 ```
 
-## 🚀 Cagou com o DB e precisa reiniciar? (so para ambiente de DEV)
 
+4. **Suba os containers (App + Banco de Dados):**
 ```bash
-# Para acessar o container pra casos de debug
-docker compose exec app bash
+docker-compose up -d
 
-# Limpar db
-php artisan migrate:fresh --seed --force
 ```
 
-Acessar o projeto localmente
-[http://localhost:8989](http://localhost:8989)
 
-## 🚀 APIKey como usar essa bagaça
-### Comando Artisan: `apikey:create`
-
-Este comando Artisan permite criar uma nova API Key no sistema com opções personalizadas como nome, role, ID do cliente/loja, e status (ativa ou inativa).
-
-#### Uso
-
+5. **Instale as dependências e gere a chave:**
 ```bash
-php artisan apikey:create "Nome da Integração" [opções]
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate --seed
+
 ```
 
-**Argumentos obrigatórios**
-```bash
-name
-Nome legível para a API Key.
-Exemplo: "Integração Serviço X"
-```
 
-**Opções**
-```bash
---role ou -r
-Define a role associada à API Key.
-Exemplo: --role=admin
+6. **Acesse a aplicação:**
+* API: `http://localhost:8000`
+* Documentação Swagger: `http://localhost:8000/api/documentation`
 
---client-id ou -c
-ID inteiro do cliente ou loja associado à role.
-Exemplo: --client-id=123
 
---inactive
-Cria a chave como inativa (por padrão, a chave é criada como ativa).
-```
 
-## ⚛️ Rodando no minikube (o mais proximo de prod)
+---
 
-### 1. Arquitetura da Solução
+## ☁️ Infraestrutura e Deploy (AWS)
 
-A arquitetura da solução é baseada em microsserviços rodando em um cluster Kubernetes. Os principais componentes são:
+A infraestrutura é provisionada automaticamente via **Terraform** e o deploy é feito no **AWS EKS** (Kubernetes) através do GitHub Actions.
 
-  * **Backend da Aplicação (`soat-app`)**: Um `Deployment` de dois pods que executam a aplicação Laravel. Ele se conecta ao banco de dados e ao cache. A escalabilidade é gerenciada por um `HorizontalPodAutoscaler` (HPA) que ajusta o número de pods com base no uso da CPU para lidar com a demanda, resolvendo possíveis problemas de performance no totem de autoatendimento.
-  * **Serviço de Banco de Dados (`postgres-deployment`)**: Um `Deployment` de um único pod que executa um banco de dados PostgreSQL. Os dados são persistidos através de um `Volume` temporário (para o ambiente de desenvolvimento). As credenciais de acesso são fornecidas de forma segura através de um `Secret` do Kubernetes.
-  * **Serviço de Cache (`redis-deployment`)**: Um `Deployment` de um único pod que executa uma instância do Redis para gerenciamento de cache e sessões da aplicação.
-  * **Serviços (`soat-app-service`, `postgres-service`, `redis-service`)**: Objetos `Service` do Kubernetes que gerenciam o acesso e a comunicação entre os pods. O `soat-app-service` expõe a aplicação para o mundo exterior.
-  * **Configurações e Segredos**: Valores sensíveis, como senhas, são armazenados em um `Secret` (`soat-secrets`). Já configurações não sensíveis, como nomes de usuários e de banco de dados, são armazenadas em um `ConfigMap` (`soat-config`).
+### Estrutura de Infra (`/infrastructure`)
 
-### 2. Pré-requisitos
+* **Terraform:** Gerencia a criação do Cluster EKS, Banco de Dados RDS (Postgres) e Bucket S3 para estado remoto.
+* **Kubernetes:** Contém os manifestos de `Deployment`, `Service` (LoadBalancer), `HPA` (Horizontal Pod Autoscaler) e `Secrets`.
 
-Para executar o projeto, você precisa ter as seguintes ferramentas instaladas:
+### Autenticação Serverless (`/serverless`)
 
-  * **Docker**: Para construir a imagem da aplicação.
-  * **Minikube**: Para rodar o cluster Kubernetes localmente.
-  * **kubectl**: A ferramenta de linha de comando do Kubernetes.
+A autenticação do cliente (CPF) é feita através de uma **AWS Lambda** isolada, garantindo escalabilidade independente para o fluxo de login.
 
-### 3. Guia de Execução
+---
 
-Siga os passos abaixo para implantar o projeto no Minikube.
+## 🔄 CI/CD Pipelines
 
-#### Passo A: Preparar os Arquivos de Configuração
+O projeto conta com workflows automatizados no GitHub Actions:
 
-Certifique-se de que os seguintes arquivos de manifesto Kubernetes (`.yaml`) estão no diretório  `kubernets\` e configurados corretamente:
+| Workflow | Gatilho | Descrição |
+| :--- | :--- | :--- |
+| **CI - Main App** | Push/PR em `services/core-api` | 1. Valida o código (Lint/Syntax).<br>2. Sobe banco MySQL temporário.<br>3. Executa testes unitários e de integração (PHPUnit). |
+| **CD - Infrastructure** | Push na `main` | 1. **Infra (IaC):** Aplica mudanças do Terraform (RDS, Auth, EKS).<br>2. **App:** Builda e envia imagem Docker ao ECR.<br>3. **Deploy:** Atualiza os manifestos no Cluster EKS.<br>4. **Release:** Gera Release Notes e registra o Deployment no GitHub. |
+| **CD - Plan Only** | Pull Request na `main` | Executa apenas o `terraform plan` para validar mudanças de infraestrutura antes do merge. |
 
-  * `configmap.yaml`
-  * `secret.yaml`
-  * `deployment.yaml`
-  * `service.yaml`
-  * `hpa.yaml`
-  * `postgres-deployment.yaml`
-  * `postgres-service.yaml`
-  * `redis-deployment.yaml`
-  * `redis-service.yaml`
+---
 
-Seus arquivos `configmap.yaml` e `secret.yaml` devem ter as seguintes credenciais, que correspondem ao `env.example` da aplicação:
+## 📚 Stack Tecnológica
 
-  * `db_name`: `laravel`
-  * `db_user`: `root`
-  * `db_password`: `root`
-
-#### Passo B: Script de Implantação
-
-Utilize o script `deploy_minikube.sh` para automatizar o processo de construção e implantação da aplicação. O script irá:
-
-1.  Verificar e iniciar o Minikube.
-2.  Construir a imagem Docker da aplicação no ambiente do Minikube.
-3.  Aplicar todos os manifestos do Kubernetes.
-4.  Aguardar o rollout de todos os deployments.
-5.  Iniciar o port-forward para expor a aplicação.
-
-Execute o script com o seguinte comando:
-
-```bash
-./deploy_minikube.sh
-```
-
-#### Passo C: Acessar a Aplicação
-
-Depois que o script for concluido pode utilizar a URL de acesso disponibilizada no log de saida do script.
-
-Caso o seu ambiente seja o codespace utilize o `kubectl port-forward service/soat-app-service 8000:8000` para realizar o portfoward e expor a porta da aplicação!
-
-  * **URL da API**: `http://localhost:8000`
-
-A documentação do Swagger da API estará disponível em:
-
-  * **Swagger UI**: `http://localhost:8000/api/documentation`
-
-## Outros documentos:
-
-- [Arquitetura geral](docs/architeture.md)
-- [Explicações do checkout](docs/checkout_docs.md)
-- [Como a aplicação usa o DB](docs/data_persistece.md)
-- [Domain-Driven Design (DDD): Um Resumo](docs/ddd.md)
-- [Detalhes do Kubernets](docs/k8_architeture.md)
+* **Linguagem:** PHP 8.4 (Laravel 11)
+* **Banco de Dados:** MySQL (Local) / PostgreSQL (AWS RDS)
+* **Cache:** Redis
+* **Serverless:** Node.js (AWS Lambda)
+* **Infra:** Terraform, AWS EKS, Docker
+* **CI/CD:** GitHub Actions
