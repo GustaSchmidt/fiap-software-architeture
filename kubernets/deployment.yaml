@@ -29,7 +29,15 @@ spec:
         - name: DB_CONNECTION
           value: pgsql
         - name: DB_HOST
-          value: postgres-service
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: host
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: port
         - name: DB_DATABASE
           valueFrom:
             configMapKeyRef:
