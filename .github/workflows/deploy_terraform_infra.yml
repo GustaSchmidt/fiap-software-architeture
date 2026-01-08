@@ -110,7 +110,7 @@ jobs:
         working-directory: ./terraform/database
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}e
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: |
           terraform apply -auto-approve -input=false
 
