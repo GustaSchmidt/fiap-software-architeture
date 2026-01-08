@@ -31,23 +31,23 @@ spec:
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: soat-secrets
               key: db_host
         - name: DB_PORT
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: soat-secrets
               key: db_port
         - name: DB_DATABASE
           valueFrom:
             configMapKeyRef:
-              name: soat-config
-              key: db_name
+              name: soat-secrets
+              key: db_database
         - name: DB_USERNAME
           valueFrom:
             configMapKeyRef:
-              name: soat-config
-              key: db_user
+              name: soat-secrets
+              key: db_username
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
