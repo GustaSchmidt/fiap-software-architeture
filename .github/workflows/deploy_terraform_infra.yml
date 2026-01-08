@@ -63,10 +63,10 @@ jobs:
       pull-requests: write
     
     outputs:
-      db_host: ${{ steps.apply.outputs.db_host }}
-      db_port: ${{ steps.apply.outputs.db_port }}
-      db_name: ${{ steps.apply.outputs.db_name }}
-      db_user: ${{ steps.apply.outputs.db_user }}
+      db_host: ${{ steps.get-outputs.outputs.db_host }}
+      db_port: ${{ steps.get-outputs.outputs.db_port }}
+      db_name: ${{ steps.get-outputs.outputs.db_name }}
+      db_user: ${{ steps.get-outputs.outputs.db_user }}
 
     steps:
       - name: Checkout
@@ -114,12 +114,15 @@ jobs:
         run: |
           terraform apply -auto-approve -input=false
 
-          terraform output -json
-          terraform output -raw db_host
-
           echo "Terraform Apply completed."
-          echo "Extracting outputs..."
 
+      - name: Terraform Outputs
+        id: get-outputs
+        working-directory: ./terraform/database
+        run: |
+          echo "Extracting outputs..."
+          terraform output -json
+          
           DB_HOST=$(terraform output -raw db_host | tr -d '\n\r')
           DB_PORT=$(terraform output -raw db_port | tr -d '\n\r')
           DB_NAME=$(terraform output -raw db_name | tr -d '\n\r')
@@ -309,7 +312,7 @@ jobs:
   #########################################
   deploy-k8s-app:
     name: 'Deploy App to EKS'
-    needs: [deploy-kubernetes-infra]
+    needs: [deploy-kubernetes-infra, deploy-database-infra]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
@@ -332,7 +335,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: fiap-soat-app
-          IMAGE_TAG: ${{ github.sha }} # <--- Usaremos o SHA do commit para versionar
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build e Push com a TAG única do commit (Boa prática)
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -368,8 +371,6 @@ jobs:
 
       - name: Create Database Secret
         run: |
-          echo 'database host = ${{ needs.deploy-database-infra.outputs.db_host }}'
-
           # Usamos o nome 'soat-secrets' e chaves minúsculas para bater com seu YAML
           kubectl create secret generic soat-secrets \
             --from-literal=db_host='${{ needs.deploy-database-infra.outputs.db_host }}' \
