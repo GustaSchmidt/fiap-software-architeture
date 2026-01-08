@@ -55,6 +55,7 @@ module "eks" {
 
       iam_role_additional_policies = {
         CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
       }
     }
   }

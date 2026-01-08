@@ -13,27 +13,6 @@ class TestDatabaseConnection extends Command
 
     public function handle()
     {
-        // Remove
-        $this->info('--- LISTANDO TODAS AS ENVS NO CONTAINER ---');
-
-        // Pega todas as variáveis de ambiente
-        $envs = getenv();
-
-        foreach ($envs as $key => $value) {
-            $this->line("{$key}={$value}");
-        }
-
-        $this->info('-------------------------------------------');
-        $this->info('🔍 Testando conexão com o banco de dados...');
-        $this->info('--- Variáveis de Ambiente Identificadas ---');
-        $this->line("DB_CONNECTION: " . env('DB_CONNECTION'));
-        $this->line("DB_HOST: " . env('DB_HOST'));
-        $this->line("DB_PORT: " . env('DB_PORT'));
-        $this->line("DB_DATABASE: " . env('DB_DATABASE'));
-        $this->line("DB_USERNAME: " . env('DB_USERNAME'));
-        $this->line("APP_KEY: " . env('APP_KEY'));
-        $this->info('------------------------------------------');
-
         $this->info('🔍 Testando conexão...');
 
         try {
@@ -43,9 +22,9 @@ class TestDatabaseConnection extends Command
         } catch (Exception $e) {
             $this->error("❌ Falha na conexão com o banco de dados.");
             $this->error("Erro: " . $e->getMessage());
-            return 1; // retorna código de erro
+            return 1;
         }
 
-        return 0; // sucesso
+        return 0;
     }
 }
