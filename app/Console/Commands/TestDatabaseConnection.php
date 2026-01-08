@@ -13,7 +13,28 @@ class TestDatabaseConnection extends Command
 
     public function handle()
     {
+        // Remove
+        $this->info('--- LISTANDO TODAS AS ENVS NO CONTAINER ---');
+
+        // Pega todas as variáveis de ambiente
+        $envs = getenv();
+
+        foreach ($envs as $key => $value) {
+            $this->line("{$key}={$value}");
+        }
+
+        $this->info('-------------------------------------------');
+
         $this->info('🔍 Testando conexão com o banco de dados...');
+        $this->info('--- Variáveis de Ambiente Identificadas ---');
+        $this->line("DB_CONNECTION: " . env('DB_CONNECTION'));
+        $this->line("DB_HOST: " . env('DB_HOST'));
+        $this->line("DB_PORT: " . env('DB_PORT'));
+        $this->line("DB_DATABASE: " . env('DB_DATABASE'));
+        $this->line("DB_USERNAME: " . env('DB_USERNAME'));
+        $this->info('------------------------------------------');
+
+        $this->info('🔍 Testando conexão...');
 
         try {
             DB::connection()->getPdo();
