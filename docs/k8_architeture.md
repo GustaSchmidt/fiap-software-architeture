@@ -1,81 +1,126 @@
-### Guia do Projeto com Kubernetes (Minikube)
+# ☸️ Arquitetura Kubernetes (AWS EKS)
 
-Este `README.md` fornece as instruções detalhadas para executar a aplicação com Kubernetes, utilizando o Minikube como ambiente local.
+Este documento detalha a topologia da aplicação rodando no cluster **Amazon Elastic Kubernetes Service (EKS)**. Diferente do ambiente de desenvolvimento (Minikube), este ambiente utiliza serviços gerenciados para garantir alta disponibilidade e escalabilidade.
 
-#### 1\. Arquitetura da Solução
-
-A arquitetura da solução é baseada em microsserviços rodando em um cluster Kubernetes. A seguir, o diagrama visual que representa a arquitetura:
+## 🏗️ Diagrama da Solução
 
 ```mermaid
 graph TD
-    subgraph "Sua Máquina Local"
-        A[Terminal do Usuário]
+    User((Cliente/Web))
+    
+    subgraph "AWS Cloud (us-east-1)"
+        ELB[AWS Load Balancer]
+        
+        subgraph "EKS Cluster: fiap-soat-cluster"
+            direction TB
+            
+            subgraph "Namespace: Default"
+                SvcApp["Service: fiap-app-service<br/>(Type: LoadBalancer)"]
+                SvcRedis["Service: redis-service<br/>(Type: ClusterIP)"]
+                
+                HPA["HPA: Autoscaling CPU > 85%"]
+                
+                DeployApp["Deployment: fiap-app<br/>(PHP 8.4 / Laravel)"]
+                DeployRedis["Deployment: redis-deployment<br/>(Cache)"]
+                
+                Secret{Secret: soat-secrets}
+                Config{ConfigMap: soat-config}
+            end
+        end
+        
+        RDS[("Amazon RDS<br/>PostgreSQL")]
+        ECR[("Amazon ECR<br/>Registry de Imagens")]
     end
 
-    subgraph "Cluster Kubernetes (Minikube)"
-        direction LR
-        subgraph "Ingress/Port Forwarding"
-            B[kubectl port-forward<br/>8000:80]
-        end
-
-        subgraph "Serviços do Kubernetes"
-            C1[soat-app-service<br/>ClusterIP]
-            C2[postgres-service<br/>ClusterIP]
-            C3[redis-service<br/>ClusterIP]
-        end
-
-        subgraph "Deployments (Pods)"
-            D1[soat-app-deployment<br/>HPA]
-            D2[postgres-deployment<br/>1 réplica]
-            D3[redis-deployment<br/>1 réplica]
-        end
-
-        subgraph "Componentes de Configuração"
-            E1{soat-config<br/>ConfigMap}
-            E2{soat-secrets<br/>Secret}
-        end
-    end
-
-    A -- "Acessa http://localhost:8000" --> B
-    B -- "Redireciona para porta 80" --> C1
-    C1 -- "Redireciona para o contêiner" --> D1
-
-    D1 -- "Lê variáveis de ambiente" --> E1
-    D1 -- "Lê segredos de autenticação" --> E2
-    D1 -- "Conecta à porta 5432" --> C2
-    D1 -- "Conecta à porta 6379" --> C3
-
-    C2 -- "Redireciona para o contêiner" --> D2
-    C3 -- "Redireciona para o contêiner" --> D3
-    D2 -- "Lê variáveis de ambiente" --> E1
-    D2 -- "Lê segredos de autenticação" --> E2
+    %% Fluxo de Tráfego
+    User -->|HTTP/80| ELB
+    ELB -->|Traffic Dist| SvcApp
+    SvcApp -->|Selector: app=soat-app| DeployApp
+    
+    %% Conexões Internas
+    DeployApp -->|Cache/Session| SvcRedis
+    SvcRedis --> DeployRedis
+    
+    %% Conexões Externas
+    DeployApp -->|Persistência| RDS
+    DeployApp -.->|Pull Image| ECR
+    
+    %% Configuração
+    DeployApp -.->|Env Vars| Secret
+    DeployApp -.->|Configs| Config
+    HPA -.->|Scale Out/In| DeployApp
 ```
 
-**Descrição da arquitetura:**
+## 🧩 Componentes do Cluster
 
-  * **Backend da Aplicação (`soat-app`)**: É um `Deployment` que executa a aplicação Laravel. A escalabilidade é gerenciada por um `HorizontalPodAutoscaler` (HPA) que ajusta o número de pods com base no uso da CPU para lidar com a demanda.
-  * **Serviço de Banco de Dados (`postgres-deployment`)**: Um `Deployment` que executa um banco de dados PostgreSQL. As credenciais de acesso são fornecidas de forma segura através de um `Secret` do Kubernetes.
-  * **Serviço de Cache (`redis-deployment`)**: Um `Deployment` de um único pod que executa uma instância do Redis para gerenciamento de cache.
-  * **Serviços (`soat-app-service`, `postgres-service`, `redis-service`)**: Objetos `Service` do Kubernetes que gerenciam a comunicação entre os pods. O `soat-app-service` é usado para expor a aplicação.
-  * **Configurações e Segredos**: Valores sensíveis, como senhas, são armazenados em um `Secret` (`soat-secrets`). Já configurações não sensíveis, como nomes de usuários e de banco de dados, são armazenadas em um `ConfigMap` (`soat-config`).
+### 1. Ingress & Networking
 
-#### 2\. Pré-requisitos
+* **Service (`fiap-app-service`):** Do tipo `LoadBalancer`. A AWS provisiona automaticamente um *Classic Load Balancer (CLB)* ou *Network Load Balancer (NLB)* para expor a aplicação para a internet na porta 80.
+* **Service (`redis-service`):** Do tipo `ClusterIP`. Acessível apenas internamente pelos pods da aplicação, garantindo segurança na camada de cache.
 
-Para executar o projeto, você precisa ter as seguintes ferramentas instaladas:
+### 2. Workloads (Aplicações)
 
-  * **Docker**: Para construir a imagem da aplicação.
-  * **Minikube**: Para rodar o cluster Kubernetes localmente.
-  * **kubectl**: A ferramenta de linha de comando do Kubernetes.
+* **Core API (`fiap-app`):**
+* Gerenciado por um `Deployment`.
+* **Escalabilidade:** Controlada pelo **HPA** (`HorizontalPodAutoscaler`), que monitora o uso de CPU. Se a média ultrapassar **85%**, novos pods são criados automaticamente (Min: 2, Max: 5).
+* **Zero Downtime:** Configurado com `RollingUpdate` para garantir que novas versões sejam implantadas sem derrubar o serviço.
 
-#### 3\. Guia de Execução
 
-Siga os passos do README.MD 
+* **Redis (`redis-deployment`):**
+* Mantém sessões de usuário e cache de consultas.
+* Roda como um pod único (Stateful) para simplicidade neste estágio arquitetural.
 
-#### 4\. Demonstração e Documentação
 
-Para a entrega da documentação, inclua um vídeo no YouTube ou Vimeo que demonstre a arquitetura e o funcionamento da aplicação. O vídeo deve mostrar:
 
-  * A implantação usando o script.
-  * O acesso aos endpoints da API.
-  * A visualização dos logs para provar que a aplicação está funcionando.
-  * A URL para o vídeo deve ser adicionada aqui: `[Link para o vídeo]`
+### 3. Gerenciamento de Configuração
+
+* **Secrets (`soat-secrets`):**
+* Não existem no repositório de código por segurança.
+* São criados **dinamicamente** pelo Pipeline de CI/CD (GitHub Actions) no momento do deploy, injetando as credenciais do RDS (criado pelo Terraform) e a chave da aplicação.
+
+
+* **ConfigMap (`soat-config`):**
+* Armazena variáveis não sensíveis, como configurações de timezone, debug mode e drivers de conexão.
+
+
+
+---
+
+## ☁️ Integração com Serviços AWS
+
+A aplicação no Kubernetes não roda isolada; ela se conecta a recursos externos provisionados via Terraform:
+
+| Recurso K8s | Recurso AWS | Descrição |
+| --- | --- | --- |
+| **Pod** | **IAM Role (Node Group)** | Os nós do cluster possuem permissão `AmazonEC2ContainerRegistryReadOnly` para baixar imagens privadas do ECR. |
+| **Env Var** | **RDS Endpoint** | O Host do banco de dados é injetado via output do Terraform diretamente no Secret do Kubernetes. |
+| **LoadBalancer** | **AWS ELB** | O Service do K8s cria e configura automaticamente o balanceador de carga na VPC da AWS. |
+
+---
+
+## 🛠️ Como interagir com o Cluster
+
+Para desenvolvedores com acesso (via `aws eks update-kubeconfig`):
+
+1. **Listar Pods e Status:**
+```bash
+kubectl get pods -o wide
+
+```
+
+
+2. **Verificar Logs da Aplicação:**
+```bash
+kubectl logs -f deployment/fiap-app
+
+```
+
+
+3. **Verificar Escalabilidade (HPA):**
+```bash
+kubectl get hpa
+
+```
+
+4. **Acessar o Banco de Dados (via Pod):**
+Como o RDS está numa subnet privada ou restrita, a conexão deve ser feita através da aplicação ou de um *bastion host*.
