@@ -52,6 +52,10 @@ module "eks" {
       network_interfaces = [{
         associate_public_ip_address = true
       }]
+      
+      iam_role_additional_policies = {
+        CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+      }
     }
   }
 
@@ -75,4 +79,20 @@ resource "aws_ecr_repository" "app_repo" {
 
 output "ecr_repository_url" {
   value = aws_ecr_repository.app_repo.repository_url
+}
+
+
+# --- Monitoramento da aplicação com cloudwatch ---
+# Anexa a permissão de CloudWatch na Role dos Nodes
+resource "aws_iam_role_policy_attachment" "nodes_cloudwatch" {
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  role       = aws_iam_role.eks_nodes_role.name # <--- Coloque o nome da sua role de Node aqui
+}
+
+resource "aws_eks_addon" "cloudwatch_observability" {
+  cluster_name = module.eks.cluster_name 
+  addon_name   = "amazon-cloudwatch-observability"
+  
+  # Dependência para garantir que o cluster esteja pronto
+  depends_on = [ module.eks ]
 }

@@ -382,24 +382,53 @@ jobs:
       - name: Update Image, Wait Rollout & Report
         run: |
           echo "========================================================"
-          echo "🚀 INICIANDO ATUALIZAÇÃO DE IMAGEM"
+          echo "🚀 INICIANDO ATUALIZAÇÃO INTELIGENTE"
           echo "Imagem alvo: ${{ env.FULL_IMAGE }}"
           echo "========================================================"
 
-          echo "🔄 Enviando comando 'set image' para o Cluster..."
           kubectl set image deployment/fiap-app soat-app=${{ env.FULL_IMAGE }}
 
-          echo "⏳ Aguardando estabilização dos Pods (Rollout Status)..."
+          # 2. Loop de Monitoramento (Fail Fast)
+          # Tenta por 5 minutos (30 tentativas de 10s). Se detectar erro, aborta.
+          ATTEMPTS=0
+          MAX_ATTEMPTS=30
           
-          if kubectl rollout status deployment/fiap-app --timeout=15m; then
-            echo "✅ Rollout concluído com SUCESSO!"
-          else
-            echo "❌ O Rollout falhou ou demorou demais!"
-            echo "🔍 Diagnóstico de Falha:"
-            kubectl get pods -l app=fiap-app
-            echo "--- Logs recentes dos pods ---"
-            kubectl logs -l app=fiap-app --tail=50 --all-containers=true
-            exit 1 # Força a falha do Job
+          echo "⏳ Monitorando estabilidade dos Pods..."
+          
+          while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+            ATTEMPTS=$((ATTEMPTS+1))
+            sleep 10
+
+            # A) Verifica se o rollout terminou com sucesso
+            if kubectl rollout status deployment/fiap-app --timeout=1s >/dev/null 2>&1; then
+              echo "✅ Rollout concluído com SUCESSO!"
+              break
+            fi
+
+            # B) Verifica se tem Pods em estado CRÍTICO (Loop, Erro de Imagem, Config)
+            ERROR_PODS=$(kubectl get pods -l app=soat-app -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' | grep -E "CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError")
+
+            if [ ! -z "$ERROR_PODS" ]; then
+              echo "❌ ERRO CRÍTICO DETECTADO! Abortando deploy."
+              echo "Os seguintes pods estão falhando:"
+              echo "$ERROR_PODS"
+              
+              echo "--- 🔍 Diagnóstico Rápido (Logs) ---"
+              # Pega o nome do primeiro pod com erro para mostrar log
+              BAD_POD=$(echo $ERROR_PODS | awk '{print $1}')
+              kubectl logs $BAD_POD --previous --tail=20 2>/dev/null || kubectl logs $BAD_POD --tail=20
+              kubectl describe pod $BAD_POD | grep -A 10 "Events:"
+              
+              exit 1 # FALHA O JOB IMEDIATAMENTE
+            fi
+
+            echo "   ... tentativa $ATTEMPTS/$MAX_ATTEMPTS: Rollout em andamento..."
+          done
+
+          # C) Se saiu do loop pelo limite de tempo
+          if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+             echo "❌ Timeout! O deploy demorou mais de 5 minutos."
+             exit 1
           fi
 
           echo "========================================================"
@@ -422,3 +451,66 @@ jobs:
           kubectl get deployment fiap-app -o jsonpath='{.spec.template.spec.containers[0].image}'
           echo ""
           echo "========================================================"
+
+  #########################################
+  # Job 6: Debug Automático (Só se falhar)#
+  #########################################
+  debug-k8s-failure:
+    name: '🔍 Debug Kubernetes Failure'
+    needs: [deploy-kubernetes-infra, deploy-k8s-app]       
+    if: failure()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update Kubeconfig
+        run: aws eks update-kubeconfig --name fiap-soat-cluster --region us-east-1
+
+      - name: 🚨 Relatório Completo de Erro
+        run: |
+          echo "========================================================"
+          echo "🕵️‍♂️ INICIANDO INVESTIGAÇÃO AUTOMÁTICA"
+          echo "========================================================"
+          
+          echo ""
+          echo "1️⃣ STATUS DOS PODS:"
+          kubectl get pods -o wide
+          
+          echo ""
+          echo "========================================================"
+          echo "2️⃣ ANALISANDO PODS COM ERRO..."
+          
+          # Pega todos os pods do app (ajuste o label se necessário)
+          PODS=$(kubectl get pods -l app=soat-app -o jsonpath='{.items[*].metadata.name}')
+
+          for POD in $PODS; do
+            echo "--------------------------------------------------------"
+            echo "🔎 Analisando Pod: $POD"
+            echo "--------------------------------------------------------"
+            
+            # Tenta pegar o motivo da morte (Previous)
+            echo "📜 LOGS DA ÚLTIMA MORTE (--previous):"
+            if ! kubectl logs $POD --previous --tail=50 2>/dev/null; then
+               echo "   (Sem logs anteriores ou container nunca subiu)"
+            fi
+
+            echo ""
+            echo "📜 LOGS ATUAIS:"
+            kubectl logs $POD --tail=50 --all-containers=true 2>/dev/null || echo "   (Não foi possível ler logs atuais)"
+            
+            echo ""
+            echo "📋 EVENTOS (DESCRIBE):"
+            # Pega só as últimas 15 linhas do describe (onde ficam os erros)
+            kubectl describe pod $POD | grep -A 20 "Events:" || echo "   (Sem eventos)"
+            
+            echo ""
+          done
