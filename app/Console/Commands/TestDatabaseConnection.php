@@ -31,6 +31,7 @@ class TestDatabaseConnection extends Command
         $this->line("DB_PORT: " . env('DB_PORT'));
         $this->line("DB_DATABASE: " . env('DB_DATABASE'));
         $this->line("DB_USERNAME: " . env('DB_USERNAME'));
+        $this->line("APP_KEY: " . env('APP_KEY'));
         $this->info('------------------------------------------');
 
         $this->info('🔍 Testando conexão...');
