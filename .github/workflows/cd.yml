@@ -613,7 +613,7 @@ jobs:
             -f ref='${{ github.sha }}' \
             -f environment='production' \
             -f description='Deploy automático no EKS' \
-            -f production_environment='true' \
+            -F production_environment=true \
             -f required_contexts[]='' \
             --jq '.id')
 

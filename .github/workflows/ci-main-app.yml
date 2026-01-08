@@ -1,4 +1,4 @@
-name: Run Laravel API Tests
+name: CI - MAIN APP
 
 on:
   push:
