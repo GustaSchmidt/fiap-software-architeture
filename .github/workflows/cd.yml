@@ -607,19 +607,23 @@ jobs:
         run: |
           echo "🚀 Criando registro de Deployment..."
 
-          # 1. Cria o Objeto de Deployment
-          # required_contexts[]='' é um truque para não ficar esperando outros checks passarem
+          # 1. Cria o Deployment enviando JSON puro para garantir required_contexts: []
+          # Isso ignora os checks de branch protection para o deploy (funciona pra hotfix direto na main)
           DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
-            -f ref='${{ github.sha }}' \
-            -f environment='production' \
-            -f description='Deploy automático no EKS' \
-            -F production_environment=true \
-            -f required_contexts[]='' \
+            --method POST \
+            --header "Accept: application/vnd.github+json" \
+            --input - <<< "{
+              \"ref\": \"${{ github.sha }}\",
+              \"environment\": \"production\",
+              \"description\": \"Deploy automático no EKS\",
+              \"production_environment\": true,
+              \"required_contexts\": [] 
+            }" \
             --jq '.id')
 
           echo "✅ Deployment ID criado: $DEPLOYMENT_ID"
 
-          # 2. Atualiza o Status para SUCCESS e vincula o Link do App
+          # 2. Atualiza o Status para SUCCESS
           gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
             -f state='success' \
             -f environment_url="$APP_URL" \
