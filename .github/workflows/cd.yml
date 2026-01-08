@@ -569,6 +569,7 @@ jobs:
           
           ### 🔗 Link de Acesso
           👉 **[Acessar Aplicação]($APP_URL)** ($APP_URL)
+          OBS: Este link de acesso pode mudar, para validar o acesso verifique os deployments
           
           ### 📦 Detalhes Técnicos
           - **Versão:** $TAG_NAME
@@ -585,3 +586,44 @@ jobs:
             --title "Release $TAG_NAME" \
             --notes-file release_notes.md \
             --latest
+
+  #########################################
+  # Job 8: Registrar Deploy no GitHub     #
+  #########################################
+  register-deployment:
+    name: 'Update GitHub Environment'
+    needs: [deploy-k8s-app]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      deployments: write
+
+    steps:
+      - name: Create Deployment & Status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_URL: ${{ needs.deploy-k8s-app.outputs.load_balancer_url }}
+          BRANCH: main
+        run: |
+          echo "🚀 Criando registro de Deployment..."
+
+          # 1. Cria o Objeto de Deployment
+          # required_contexts[]='' é um truque para não ficar esperando outros checks passarem
+          DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
+            -f ref='${{ github.sha }}' \
+            -f environment='production' \
+            -f description='Deploy automático no EKS' \
+            -f production_environment='true' \
+            -f required_contexts[]='' \
+            --jq '.id')
+
+          echo "✅ Deployment ID criado: $DEPLOYMENT_ID"
+
+          # 2. Atualiza o Status para SUCCESS e vincula o Link do App
+          gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+            -f state='success' \
+            -f environment_url="$APP_URL" \
+            -f log_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f description='Aplicação rodando e acessível'
+
+          echo "✅ Status atualizado no GitHub Environments!"
