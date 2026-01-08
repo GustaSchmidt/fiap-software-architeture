@@ -114,6 +114,8 @@ jobs:
         run: |
           terraform apply -auto-approve -input=false
 
+          terraform output -json
+
           echo "Terraform Apply completed."
           echo "Extracting outputs..."
 
