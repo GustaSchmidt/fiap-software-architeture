@@ -24,7 +24,6 @@ class TestDatabaseConnection extends Command
         }
 
         $this->info('-------------------------------------------');
-
         $this->info('🔍 Testando conexão com o banco de dados...');
         $this->info('--- Variáveis de Ambiente Identificadas ---');
         $this->line("DB_CONNECTION: " . env('DB_CONNECTION'));
