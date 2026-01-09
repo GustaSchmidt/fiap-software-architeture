@@ -5,7 +5,8 @@ namespace App\Services;
 use App\Domain\Entities\Pedido as DomainPedido;
 use App\Domain\Repositories\PedidoRepositoryInterface;
 use App\Domain\Repositories\SacolaRepositoryInterface;
-use App\Adapters\Gateways\MercadoPagoClient;
+// use App\Adapters\Gateways\MercadoPagoClient; // Removido: Agora é um microsserviço externo
+use Illuminate\Support\Facades\Http;
 use App\Models\Client;
 use Exception;
 
@@ -13,12 +14,12 @@ class CheckoutService
 {
     public function __construct(
         private SacolaRepositoryInterface $sacolaRepository,
-        private PedidoRepositoryInterface $pedidoRepository,
-        private MercadoPagoClient $mercadoPagoClient
+        private PedidoRepositoryInterface $pedidoRepository
+        // private MercadoPagoClient $mercadoPagoClient // Removido
     ) {}
 
     /**
-     * Processa o checkout de uma sacola e cria um pedido de pagamento.
+     * Processa o checkout de uma sacola e solicita pagamento ao microsserviço.
      *
      * @param int $clientId
      * @return array
@@ -26,7 +27,7 @@ class CheckoutService
      */
     public function processarCheckout(int $clientId): array
     {
-        // 1. Busca a sacola e recalcula o total (lógica de negócio)
+        // 1. Busca a sacola e recalcula o total
         $sacola = $this->sacolaRepository->findById($clientId);
 
         if (empty($sacola->produtos)) {
@@ -42,51 +43,60 @@ class CheckoutService
         // 2. Busca o cliente
         $cliente = Client::findOrFail($clientId);
 
-        // 3. Interage com a API de pagamento (adaptador de infraestrutura)
-        $payerInfo = [
-            'email' => $cliente->email,
-            'first_name' => $cliente->nome,
-            'last_name' => $cliente->sobrenome,
-            'identification_type' => 'CPF',
-            'identification_number' => $cliente->cpf,
-        ];
-        $notificationUrl = route('webhooks.mercadopago.notification');
-        $externalReference = "SAC_{$sacola->id}_CLI_{$clientId}_" . time();
+        // 3. Comunicação com o Microsserviço de Pagamento (Go)
+        // URL definida no .env, ex: http://payment-service:8081
+        $paymentServiceUrl = config('services.payment.url') ?? env('PAYMENT_SERVICE_URL'); 
 
-        try {
-            $dadosPagamentoMP = $this->mercadoPagoClient->criarPagamentoPix(
-                $valorTotalPagamento,
-                "Pedido da Sacola #{$sacola->id}",
-                $payerInfo,
-                $externalReference,
-                $notificationUrl
-            );
-        } catch (Exception $e) {
-            throw new Exception("Falha ao processar pagamento: " . $e->getMessage());
+        if (!$paymentServiceUrl) {
+            throw new Exception("A URL do serviço de pagamento não está configurada.");
         }
 
-        // 4. Cria o pedido no banco de dados (usando o PedidoRepository)
+        try {
+            // Monta o payload conforme esperado pelo serviço em Go (struct PaymentRequest)
+            $payload = [
+                'amount'      => (float) $valorTotalPagamento,
+                'description' => "Pedido da Sacola #{$sacola->id}",
+                'email'       => $cliente->email,
+                'order_id'    => $sacola->id, // Usando ID da sacola como referência provisória
+                'first_name'  => $cliente->nome,
+                'last_name'   => $cliente->sobrenome,
+                'cpf'         => $cliente->cpf
+            ];
+            $response = Http::timeout(10)->post("{$paymentServiceUrl}/api/pay", $payload);
+
+            if ($response->failed()) {
+                throw new Exception("Erro no serviço de pagamento: " . $response->body());
+            }
+
+            $dadosPagamentoMP = $response->json();
+
+        } catch (Exception $e) {
+            throw new Exception("Falha ao comunicar com o serviço de pagamento: " . $e->getMessage());
+        }
+
+        // 4. Cria o pedido no banco de dados local
         $novoPedido = new DomainPedido(
             id: null,
             client_id: $clientId,
             sacola_id: $sacola->id,
             status: 'aguardando_pagamento',
             total: $valorTotalPagamento,
-            mercado_pago_id: $dadosPagamentoMP['id']
+            mercado_pago_id: $dadosPagamentoMP['payment_id'] ?? null 
         );
+        
         $pedidoCriado = $this->pedidoRepository->criar($novoPedido);
 
-        // 5. Atualiza o status da sacola (usando o SacolaRepository)
+        // 5. Atualiza o status da sacola
         $this->sacolaRepository->updateStatus($sacola->id, 'em_pagamento');
 
-        // 6. Retorna os dados necessários para o cliente
+        // 6. Retorna os dados
         return [
-            'pedido_id' => $pedidoCriado->id,
-            'status_pedido' => $pedidoCriado->status,
-            'valor_total' => $pedidoCriado->total,
-            'pix_qr_code_base64' => $dadosPagamentoMP['qr_code_base64'],
-            'pix_copia_cola' => $dadosPagamentoMP['qr_code_text'],
-            'mensagem' => 'Pedido realizado com sucesso!',
+            'pedido_id'          => $pedidoCriado->id,
+            'status_pedido'      => $pedidoCriado->status,
+            'valor_total'        => $pedidoCriado->total,
+            'pix_qr_code_base64' => $dadosPagamentoMP['qr_code_base64'] ?? null, 
+            'pix_copia_cola'     => $dadosPagamentoMP['qr_code'] ?? null,
+            'mensagem'           => 'Pedido realizado com sucesso!',
         ];
     }
 }

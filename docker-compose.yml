@@ -1,0 +1,147 @@
+version: '3.8'
+
+networks:
+  fiap-network:
+    driver: bridge
+
+services:
+  # ==============================================================================
+  # 1. CORE API (PEDIDOS - LARAVEL)
+  # ==============================================================================
+  core-api:
+    build:
+      context: ./services/core-api
+      dockerfile: Dockerfile
+    image: fiap-core-api
+    container_name: core-api
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./services/core-api:/var/www
+    ports:
+      - "8000:8000"
+    environment:
+      # Conexão com Banco de Dados
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: fiap_orders
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+      
+      # Conexão com Redis
+      REDIS_HOST: redis
+      
+      # URL do Microsserviço de Pagamentos (Nome do serviço abaixo)
+      PAYMENT_SERVICE_URL: http://payment-service:8081
+    depends_on:
+      - mysql
+      - redis
+      - payment-service
+    networks:
+      - fiap-network
+
+  # ==============================================================================
+  # 2. PAYMENT SERVICE (PAGAMENTOS - GO)
+  # ==============================================================================
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    image: fiap-payment-service
+    container_name: payment-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      # Token do Mercado Pago (Lê do .env da raiz ou do sistema)
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
+      
+      # Configuração AWS / DynamoDB Local
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      # Aponta para o container do DynamoDB Local
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+    depends_on:
+      - dynamodb
+    networks:
+      - fiap-network
+
+  # ==============================================================================
+  # 3. INFRA: BANCO DE DADOS SQL (MySQL)
+  # ==============================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: fiap-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: fiap_orders
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./.docker/mysql/data:/var/lib/mysql
+    networks:
+      - fiap-network
+
+  # ==============================================================================
+  # 4. INFRA: BANCO DE DADOS NoSQL (DynamoDB Local)
+  # ==============================================================================
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: fiap-dynamodb
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.docker/dynamodb/data:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+    networks:
+      - fiap-network
+
+  # ==============================================================================
+  # 5. INFRA: CACHE (Redis)
+  # ==============================================================================
+  redis:
+    image: redis:latest
+    container_name: fiap-redis
+    networks:
+      - fiap-network
+
+  # ==============================================================================
+  # FERRAMENTAS DE VISUALIZAÇÃO (OPCIONAIS)
+  # ==============================================================================
+  
+  # Visualizar MySQL (Acesse: http://localhost:8082)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: fiap-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8082:80"
+    depends_on:
+      - mysql
+    networks:
+      - fiap-network
+
+  # Visualizar DynamoDB (Acesse: http://localhost:8001)
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    container_name: fiap-dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      DYNAMO_ENDPOINT: http://dynamodb:8000
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    depends_on:
+      - dynamodb
+    networks:
+      - fiap-network

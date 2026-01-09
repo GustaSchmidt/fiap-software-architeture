@@ -5,33 +5,54 @@ namespace App\Http\Controllers\Webhook;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Exception;
 
 class MercadoPagoWebhookController extends Controller
 {
     public function handleNotification(Request $request)
     {
-        // Log para verificar se o webhook está sendo chamado
-        Log::info('Webhook do Mercado Pago Recebido:', $request->all());
+        // 1. Log inicial para rastreabilidade
+        Log::info('[Gateway] Webhook do Mercado Pago Recebido. Encaminhando para Payment Service.', [
+            'id' => $request->input('data.id'),
+            'type' => $request->input('type')
+        ]);
 
-        $type = $request->input('type');
-        $dataId = $request->input('data.id');
+        // 2. Obtém a URL do serviço interno de pagamentos
+        // Certifique-se de que PAYMENT_SERVICE_URL está no seu .env (ex: http://payment-service:8081)
+        $paymentServiceUrl = config('services.payment.url') ?? env('PAYMENT_SERVICE_URL');
 
-        if ($type === 'payment') { 
-            // Processe a notificação:
-            // 1. Verifique a autenticidade da notificação (se o Mercado Pago fornecer um mecanismo para isso).
-            // 2. Busque o pedido no seu banco de dados usando o $dataId (que é o ID do pagamento no MP)
-            //    ou uma referência externa que você enviou.
-            // 3. Atualize o status do seu pedido (ex: para 'pago_aprovado', 'cancelado', etc.).
-            // 4. Se o pagamento foi aprovado, você pode querer:
-            //    - Liberar o produto/serviço.
-            //    - Enviar um email de confirmação para o cliente.
-            //    - Chamar o método $sacolaRepository->fecharSacola(...) com o status apropriado.
-
-            Log::info("Notificação de pagamento do Mercado Pago processada: ID {$dataId}, Tipo: {$type}");
+        if (!$paymentServiceUrl) {
+            Log::critical('[Gateway] URL do serviço de pagamento não configurada.');
+            return response()->json(['error' => 'Configuration error'], 500);
         }
 
-        // Responda ao Mercado Pago com um status 200 OK para confirmar o recebimento.
-        // Qualquer outra resposta pode fazer com que o Mercado Pago tente reenviar a notificação.
-        return response()->json(['status' => 'recebido'], 200);
+        try {
+            // 3. Encaminha a requisição exatamente como chegou para o microsserviço
+            // O serviço em Go será responsável por validar o ID no Mercado Pago e atualizar o banco
+            $response = Http::timeout(10) // Timeout curto para não prender a conexão do Mercado Pago
+                ->post("{$paymentServiceUrl}/api/webhook", $request->all());
+
+            // 4. Verifica se o microsserviço recebeu com sucesso
+            if ($response->successful()) {
+                Log::info('[Gateway] Webhook encaminhado com sucesso para Payment Service.');
+                return response()->json(['status' => 'forwarded'], 200);
+            } else {
+                Log::error('[Gateway] Payment Service retornou erro ao receber webhook.', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                
+                return response()->json(['status' => 'error_forwarding'], 500);
+            }
+
+        } catch (Exception $e) {
+            Log::error('[Gateway] Falha de conexão ao encaminhar webhook.', [
+                'message' => $e->getMessage()
+            ]);
+
+            // Falha de rede interna: Retornamos 500 para o Mercado Pago tentar novamente
+            return response()->json(['status' => 'connection_error'], 500);
+        }
     }
 }
