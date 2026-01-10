@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-    # O filtro 'paths' garante que este CI só rode se mexerem no Go
     paths:
       - 'services/payment-service/**'
       - '.github/workflows/ci-payment-service.yml'
