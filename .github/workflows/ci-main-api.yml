@@ -66,7 +66,8 @@ jobs:
           DB_PASSWORD: secret
         run: php artisan migrate --force
 
-      - name: Run tests
+      - name: Run tests with coverage
+        id: test-coverage
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
@@ -78,13 +79,24 @@ jobs:
           # Roda os testes e gera o coverage.xml
           php artisan test --coverage-clover coverage.xml
           
-          # Extrai a porcentagem usando regex simples no XML
-          COVERAGE=$(grep -o '<metrics.*elements="[0-9]*".*coveredelements="[0-9]*"' coverage.xml | awk -F'"' '{ if ($2 > 0) print int($4 / $2 * 100); else print 90 }')
+          # Extrai a porcentagem usando PHP nativo (Mais seguro que grep/awk)
+          COVERAGE=$(php -r '
+            if (!file_exists("coverage.xml")) { echo "0"; exit; }
+            $xml = simplexml_load_file("coverage.xml");
+            // Acessa as métricas do projeto inteiro
+            $metrics = $xml->project->metrics; 
+            $total = (int) $metrics["elements"];
+            $covered = (int) $metrics["coveredelements"];
+            // Calcula e arredonda
+            echo $total > 0 ? round(($covered / $total) * 100) : 0;
+          ')
           
-          echo "Coverage detectado: $COVERAGE%"
+          echo "Coverage Final Calculado: $COVERAGE%"
+          
+          # 3. Salva nas variáveis de ambiente do GitHub
           echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
           
-          # Define a cor baseada na regra de 70%
+          # 4. Define a cor do Badge
           if (( $COVERAGE >= 80 )); then
             echo "COLOR=green" >> $GITHUB_ENV
           elif (( $COVERAGE >= 70 )); then
