@@ -2,8 +2,8 @@
 
 ### Status de Qualidade
 
-![Core API Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SEU_USUARIO/ID_DO_GIST/raw/core-api-coverage.json)
-![Payment Service Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SEU_USUARIO/ID_DO_GIST/raw/payment-service-coverage.json)
+![Core API Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GustaSchmidt/5abf2b6924817bb1f9aa61a28b0268eb/raw/core-api-coverage.json)
+![Payment Service Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GustaSchmidt/5abf2b6924817bb1f9aa61a28b0268eb/raw/payment-service-coverage.json)
 
 ---
 
