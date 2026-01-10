@@ -3,74 +3,77 @@ package transport
 import (
 	"encoding/json"
 	"net/http"
-	"github.com/gustaschmidt/fiap-payment-service/internal/platform"
+
+	"github.com/mercadopago/sdk-go/pkg/payment"
 )
 
-// Request Body que esperamos receber do Laravel
+// 1. Definição da Interface
+type PaymentUseCase interface {
+	CreatePayment(amount float64, description, email string) (*payment.Response, error)
+}
+
+// 2. DTO (Data Transfer Object) - Exportado para ser visível nos testes
 type PaymentRequest struct {
 	Amount      float64 `json:"amount"`
 	Description string  `json:"description"`
 	Email       string  `json:"email"`
-	OrderId     int     `json:"order_id"` // ID do pedido para vincular
+	OrderId     int     `json:"order_id"`
 }
 
-// Handler agrupa as dependências necessárias (no caso, o serviço do MP)
+// 3. Definição da Struct Handler
 type Handler struct {
-	mpService *platform.MercadoPagoService
+	service PaymentUseCase
 }
 
-// NewHandler cria uma nova instância do Handler
-func NewHandler(service *platform.MercadoPagoService) *Handler {
+// 4. Construtor
+func NewHandler(service PaymentUseCase) *Handler {
 	return &Handler{
-		mpService: service,
+		service: service,
 	}
 }
 
-// CreatePayment lida com a criação de pagamentos (POST /api/pay)
+// 5. Método CreatePayment
 func (h *Handler) CreatePayment(w http.ResponseWriter, r *http.Request) {
-	// 1. Validação de Método
 	if r.Method != http.MethodPost {
-		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// 2. Decodificar o JSON
 	var req PaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Payload inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid Payload", http.StatusBadRequest)
 		return
 	}
 
-	// 3. Chamar a Camada de Negócio/Plataforma
-	resp, err := h.mpService.CreatePayment(req.Amount, req.Description, req.Email)
+	resp, err := h.service.CreatePayment(req.Amount, req.Description, req.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// 4. Retornar a resposta JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"payment_id":     resp.ID,
-		"qr_code":        resp.PointOfInteraction.TransactionData.QrCode,
-		"qr_code_base64": resp.PointOfInteraction.TransactionData.QrCodeBase64,
-		"status":         resp.Status,
-	})
-}
-
-// HandleWebhook recebe as notificações do Mercado Pago (via Proxy do Laravel)
-func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
-		return
+	
+	response := map[string]interface{}{
+		"payment_id": resp.ID,
+		"status":     resp.Status,
 	}
 
-	// Aqui você processaria o JSON recebido
-	// var notification map[string]interface{}
-	// json.NewDecoder(r.Body).Decode(&notification)
+	// Verifica se existe QR Code na resposta e preenche
+	if resp.PointOfInteraction.TransactionData.QRCode != "" {
+		response["qr_code"] = resp.PointOfInteraction.TransactionData.QRCode
+		response["qr_code_base64"] = resp.PointOfInteraction.TransactionData.QRCodeBase64
+	}
 
-	// Lógica de buscar o status atualizado no MP e salvar no banco local viria aqui...
+	json.NewEncoder(w).Encode(response)
+}
+
+// 6. Método HandleWebhook
+func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"received"}`))

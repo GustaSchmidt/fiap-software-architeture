@@ -1,0 +1,49 @@
+name: CI - PAYMENT SERVICE
+
+on:
+  push:
+    branches:
+      - main
+    # O filtro 'paths' garante que este CI só rode se mexerem no Go
+    paths:
+      - 'services/payment-service/**'
+      - '.github/workflows/ci-payment-service.yml'
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'services/payment-service/**'
+
+jobs:
+  go-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/payment-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+          cache-dependency-path: services/payment-service/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Run Tests with Coverage
+        env:
+          MP_ACCESS_TOKEN: "TEST-TOKEN-CI-FOR-MOCK"
+        run: |
+          go test -v ./... -coverprofile=coverage.out
+          go tool cover -func=coverage.out
+
+      - name: Build Application
+        run: go build -v ./cmd/api/main.go
