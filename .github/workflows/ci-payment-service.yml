@@ -41,8 +41,30 @@ jobs:
         env:
           MP_ACCESS_TOKEN: "TEST-TOKEN-CI-FOR-MOCK"
         run: |
-          go test -v ./... -coverprofile=coverage.out
-          go tool cover -func=coverage.out
+          # Gera o arquivo de profile
+          go test ./... -coverprofile=coverage.out
+          
+          # Extrai o total usando a ferramenta nativa do Go
+          # O output padrão é algo como "total: (statements) 82.5%"
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | grep -o '[0-9]*\.[0-9]*' | awk '{print int($1)}')
+          
+          echo "Coverage detectado: $COVERAGE%"
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+          
+          if (( $COVERAGE >= 80 )); then
+            echo "COLOR=green" >> $GITHUB_ENV
+          elif (( $COVERAGE >= 70 )); then
+            echo "COLOR=orange" >> $GITHUB_ENV
+          else
+            echo "COLOR=red" >> $GITHUB_ENV
+          fi
 
-      - name: Build Application
-        run: go build -v ./cmd/api/main.go
+      - name: Create Badge for Payment Service
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 5abf2b6924817bb1f9aa61a28b0268eb
+          filename: payment-service-coverage.json
+          label: Go Coverage
+          message: ${{ env.COVERAGE }}%
+          color: ${{ env.COLOR }}

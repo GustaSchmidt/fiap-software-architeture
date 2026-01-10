@@ -44,8 +44,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, bcmath, pdo_mysql
-          coverage: none
+          extensions: mbstring, bcmath, pdo_mysql, pcov
+          coverage: pcov
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
@@ -74,4 +74,31 @@ jobs:
           DB_DATABASE: laravel
           DB_USERNAME: laravel
           DB_PASSWORD: secret
-        run: php artisan test --stop-on-failure
+        run: |
+          # Roda os testes e gera o coverage.xml
+          php artisan test --coverage-clover coverage.xml
+          
+          # Extrai a porcentagem usando regex simples no XML
+          COVERAGE=$(grep -o '<metrics.*elements="[0-9]*".*coveredelements="[0-9]*"' coverage.xml | awk -F'"' '{ print int($4 / $2 * 100) }')
+          
+          echo "Coverage detectado: $COVERAGE%"
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+          
+          # Define a cor baseada na regra de 70%
+          if (( $COVERAGE >= 80 )); then
+            echo "COLOR=green" >> $GITHUB_ENV
+          elif (( $COVERAGE >= 70 )); then
+            echo "COLOR=orange" >> $GITHUB_ENV
+          else
+            echo "COLOR=red" >> $GITHUB_ENV
+          fi
+
+      - name: Create Badge for Core API
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 5abf2b6924817bb1f9aa61a28b0268eb
+          filename: core-api-coverage.json
+          label: PHP Coverage
+          message: ${{ env.COVERAGE }}%
+          color: ${{ env.COLOR }}
