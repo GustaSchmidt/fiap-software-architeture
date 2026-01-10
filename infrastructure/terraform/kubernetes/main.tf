@@ -102,6 +102,6 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   cluster_name = module.eks.cluster_name 
   addon_name   = "amazon-cloudwatch-observability"
   
-  # Dependência para garantir que o cluster esteja pronto
+  # Dependência para garantir que o cluster esteja pronto (NAO MECHA AQUI CARALHO)
   depends_on = [ module.eks ]
 }
