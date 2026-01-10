@@ -17,9 +17,13 @@ jobs:
     name: 'List Changed Files'
     runs-on: ubuntu-latest
     outputs:
+      # Infraestrutura
       auth_changed: ${{ steps.changed-auth-files.outputs.any_changed }}
       database_changed: ${{ steps.changed-database-files.outputs.any_changed }}
       k8s_changed: ${{ steps.changed-k8s-files.outputs.any_changed }}
+      # Aplicações
+      core_api_changed: ${{ steps.changed-core-api.outputs.any_changed }}
+      payment_service_changed: ${{ steps.changed-payment-service.outputs.any_changed }}
       
     steps:
       - name: Checkout code
@@ -27,30 +31,49 @@ jobs:
         with:
           fetch-depth: 0 
 
-      - name: Check for changes in auth files
+      # Infra: Auth & Lambda
+      - name: Check Auth changes
         id: changed-auth-files
         uses: tj-actions/changed-files@v44
         with:
-          # O input correto é 'files'
           files: |
             infrastructure/terraform/auth/**
             serverless/lambda_auth_cpf/**
 
-      - name: Check for changes in database files
+      # Infra: Database
+      - name: Check Database changes
         id: changed-database-files
         uses: tj-actions/changed-files@v44
         with:
-          # Usamos a action uma segunda vez para o outro caminho
           files: |
             infrastructure/terraform/database/**
       
-      - name: Check for changes in kubernetes files
+      # Infra: Kubernetes Manifests Globais
+      - name: Check K8s changes
         id: changed-k8s-files
         uses: tj-actions/changed-files@v44
         with:
           files: |
             infrastructure/terraform/kubernetes/**
             infrastructure/kubernets/**
+
+      # App: Core API (Laravel)
+      - name: Check Core API changes
+        id: changed-core-api
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            services/core-api/**
+            .github/workflows/cd.yml
+
+      # App: Payment Service (Go)
+      - name: Check Payment Service changes
+        id: changed-payment-service
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            services/payment-service/**
+            .github/workflows/cd.yml
 
   #########################################
   # Job 2: Infra do Banco de Dados        #
@@ -327,22 +350,39 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push Docker image
+      # =========================================================
+      # 5.1 BUILD & PUSH: CORE API (LARAVEL)
+      # =========================================================
+      - name: Build Core API
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: fiap-soat-app
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Build e Push com a TAG única do commit (Boa prática)
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./services/core-api
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          
-          # Também atualiza a latest (opcional, mas bom para cache)
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Salva em ENV para uso posterior
+          echo "CORE_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-          # Salva a imagem completa com a TAG específica para usar no próximo passo
-          echo "FULL_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+      # =========================================================
+      # 5.2 BUILD & PUSH: PAYMENT SERVICE (GO)
+      # =========================================================
+      - name: Build Payment Service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fiap-soat-payment 
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./services/payment-service
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Salva em ENV para uso posterior
+          echo "PAYMENT_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
@@ -377,28 +417,41 @@ jobs:
             --from-literal=app_key='${{ env.GENERATED_APP_KEY }}' \
             --dry-run=client -o yaml | kubectl apply -f -
 
+          kubectl create secret generic payment-secrets \
+            --from-literal=MP_ACCESS_TOKEN='${{ secrets.MP_ACCESS_TOKEN }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy Manifests
         run: |
+          echo "# Configurações Globais e Redis"
           kubectl apply -f infrastructure/kubernets/configmap.yaml
           kubectl apply -f infrastructure/kubernets/redis-deployment.yaml
           kubectl apply -f infrastructure/kubernets/redis-service.yaml
+
+          echo "# Core API"
           kubectl apply -f infrastructure/kubernets/deployment.yaml
           kubectl apply -f infrastructure/kubernets/service.yaml
           kubectl apply -f infrastructure/kubernets/hpa.yaml
+
+          echo "# Payment Service"
+          kubectl apply -f infrastructure/kubernets/payment-deployment.yaml
+          kubectl apply -f infrastructure/kubernets/payment-service.yaml
 
       - name: Update Image, Wait Rollout & Report
         run: |
           echo "========================================================"
           echo "🚀 INICIANDO ATUALIZAÇÃO INTELIGENTE"
           echo "Imagem alvo: ${{ env.FULL_IMAGE }}"
+          echo "Payment Image: ${{ env.PAYMENT_IMAGE }}"
           echo "========================================================"
 
-          kubectl set image deployment/fiap-app soat-app=${{ env.FULL_IMAGE }}
+          kubectl set image deployment/fiap-app soat-app=${{ env.CORE_IMAGE }}
+
+          kubectl set image deployment/payment-service payment-service=${{ env.PAYMENT_IMAGE }}
 
           # 2. Loop de Monitoramento (Fail Fast)
-          # Tenta por 5 minutos (30 tentativas de 10s). Se detectar erro, aborta.
           ATTEMPTS=0
-          MAX_ATTEMPTS=30
+          MAX_ATTEMPTS=40
           
           echo "⏳ Monitorando estabilidade dos Pods..."
           
@@ -406,30 +459,34 @@ jobs:
             ATTEMPTS=$((ATTEMPTS+1))
             sleep 10
 
-            # A) Verifica se o rollout terminou com sucesso
-            if kubectl rollout status deployment/fiap-app --timeout=1s >/dev/null 2>&1; then
-              echo "✅ Rollout concluído com SUCESSO!"
+            # A) Verifica se AMBOS os rollouts terminaram
+            CORE_STATUS=$(kubectl rollout status deployment/fiap-app --timeout=1s 2>&1 || true)
+            PAY_STATUS=$(kubectl rollout status deployment/payment-service --timeout=1s 2>&1 || true)
+            
+            # Se ambos contiverem "successfully rolled out", sucesso!
+            if echo "$CORE_STATUS" | grep -q "successfully rolled out" && echo "$PAY_STATUS" | grep -q "successfully rolled out"; then
+              echo "✅ Todos os serviços (Core e Payment) foram atualizados com SUCESSO!"
               break
             fi
 
-            # B) Verifica se tem Pods em estado CRÍTICO (Loop, Erro de Imagem, Config)
-            ERROR_PODS=$(kubectl get pods -l app=soat-app -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' | grep -E "CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError" || true)
+            # B) Verifica se tem Pods em estado CRÍTICO (De qualquer label)
+            # Labels monitoradas: app=soat-app (Core) e app=payment-service (Payment)
+            ERROR_PODS=$(kubectl get pods -l 'app in (soat-app, payment-service)' -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' | grep -E "CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError" || true)
             
             if [ ! -z "$ERROR_PODS" ]; then
               echo "❌ ERRO CRÍTICO DETECTADO! Abortando deploy."
               echo "Os seguintes pods estão falhando:"
               echo "$ERROR_PODS"
               
-              echo "--- 🔍 Diagnóstico Rápido (Logs) ---"
-              # Pega o nome do primeiro pod com erro para mostrar log
+              echo "--- 🔍 Diagnóstico Rápido (Logs do Pod com falha) ---"
               BAD_POD=$(echo $ERROR_PODS | awk '{print $1}')
               kubectl logs $BAD_POD --previous --tail=20 2>/dev/null || kubectl logs $BAD_POD --tail=20
               kubectl describe pod $BAD_POD | grep -A 10 "Events:"
               
-              exit 1 # FALHA O JOB IMEDIATAMENTE
+              exit 1
             fi
 
-            echo "   ... tentativa $ATTEMPTS/$MAX_ATTEMPTS: Rollout em andamento..."
+            echo "   ... tentativa $ATTEMPTS/$MAX_ATTEMPTS: Atualizando..."
           done
 
           # C) Se saiu do loop pelo limite de tempo

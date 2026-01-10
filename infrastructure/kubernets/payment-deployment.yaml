@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  labels:
+    app: payment-service
+spec:
+  replicas: 1 # Pode aumentar via HPA
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: gustaschmidt/fiap-payment-service:latest # Ajuste para seu DockerHub/ECR
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        env:
+        - name: MP_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: payment-secrets # Criaremos esse secret depois
+              key: MP_ACCESS_TOKEN
+        - name: AWS_REGION
+          value: "us-east-1"
+        livenessProbe:
+          httpGet:
+            path: /api/webhook
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 15
