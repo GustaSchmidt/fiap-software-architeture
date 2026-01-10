@@ -31,9 +31,9 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="PAYMENT_SERVICE_URL" value="http://payment-service-test"/>
     </php>
-    <source>
+    <coverage>
         <include>
             <directory>app</directory>
         </include>
-    </source>
+    </coverage>
 </phpunit>
