@@ -145,3 +145,22 @@ services:
       - dynamodb
     networks:
       - fiap-network
+  
+# ==============================================================================
+# Micro Serviço do totem para realizar pedidos
+# ==============================================================================
+
+totem-frontend:
+    build:
+      context: ../../services/totem-frontend
+      dockerfile: Dockerfile
+    container_name: totem-app
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://app:8000/api
+      - API_KEY=sua-chave-secreta
+    depends_on:
+      - app
+    networks:
+      - soat-network
