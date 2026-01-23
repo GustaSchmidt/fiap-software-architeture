@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   fiap-network:
     driver: bridge
@@ -150,17 +148,15 @@ services:
 # Micro Serviço do totem para realizar pedidos
 # ==============================================================================
 
-totem-frontend:
-    build:
-      context: ../../services/totem-frontend
-      dockerfile: Dockerfile
-    container_name: totem-app
-    ports:
-      - "8501:8501"
-    environment:
-      - API_URL=http://app:8000/api
-      - API_KEY=sua-chave-secreta
-    depends_on:
-      - app
-    networks:
-      - soat-network
+  totem-frontend:
+      build:
+        context: ./services/totem-frontend
+        dockerfile: Dockerfile
+      container_name: totem-app
+      ports:
+        - "8501:8501"
+      environment:
+        - API_URL=http://core-api:8000/api
+        - API_KEY=sua-chave-secreta
+      networks:
+        - fiap-network
