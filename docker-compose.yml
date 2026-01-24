@@ -54,8 +54,6 @@ services:
     environment:
       # Token do Mercado Pago (Lê do .env da raiz ou do sistema)
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
-      
-      # Configuração AWS / DynamoDB Local
       AWS_REGION: us-east-1
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
@@ -93,7 +91,7 @@ services:
     container_name: fiap-dynamodb
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     ports:
-      - "8000:8000"
+      - "8002:8000"
     volumes:
       - ./.docker/dynamodb/data:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal

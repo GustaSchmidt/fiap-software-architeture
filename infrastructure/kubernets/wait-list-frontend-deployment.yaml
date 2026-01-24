@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wait-list-frontend
+  labels:
+    app: wait-list-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wait-list-frontend
+  template:
+    metadata:
+      labels:
+        app: wait-list-frontend
+    spec:
+      containers:
+      - name: wait-list-frontend
+        image: wait-list-frontend:latest # Será atualizado pelo CI/CD
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        env:
+        - name: API_URL
+          value: "http://fiap-app-service" # Endpoint interno da core-api
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"

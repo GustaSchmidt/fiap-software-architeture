@@ -442,6 +442,10 @@ jobs:
           kubectl apply -f infrastructure/kubernets/totem-frontend-service.yaml
           kubectl apply -f infrastructure/kubernets/totem-frontend-hpa.yaml
 
+          echo "# Wait list frontend"
+          kubectl apply -f infrastructure/kubernets/wait-list-frontend-deployment.yaml
+          kubectl apply -f infrastructure/kubernets/wait-list-frontend-service.yaml
+
       - name: Update Image, Wait Rollout & Report
         run: |
           echo "========================================================"
