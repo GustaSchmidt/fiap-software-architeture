@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: totem-frontend-service
+  labels:
+    app: totem-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: totem-frontend
+  ports:
+  - protocol: TCP
+    port: 80 
+    targetPort: 80

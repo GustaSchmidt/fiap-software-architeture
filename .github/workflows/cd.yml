@@ -437,6 +437,11 @@ jobs:
           kubectl apply -f infrastructure/kubernets/payment-deployment.yaml
           kubectl apply -f infrastructure/kubernets/payment-service.yaml
 
+          echo "# Totem frontend"
+          kubectl apply -f infrastructure/kubernets/totem-frontend-deployment.yaml
+          kubectl apply -f infrastructure/kubernets/totem-frontend-service.yaml
+          kubectl apply -f infrastructure/kubernets/totem-frontend-hpa.yaml
+
       - name: Update Image, Wait Rollout & Report
         run: |
           echo "========================================================"
