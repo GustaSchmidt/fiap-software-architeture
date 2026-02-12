@@ -1,5 +1,12 @@
 # 🍔 FIAP Tech Challenge - Food Delivery API
 
+### Status de Qualidade
+
+![Core API Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GustaSchmidt/5abf2b6924817bb1f9aa61a28b0268eb/raw/core-api-coverage.json)
+![Payment Service Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GustaSchmidt/5abf2b6924817bb1f9aa61a28b0268eb/raw/payment-service-coverage.json)
+
+---
+
 Projeto desenvolvido como parte do Tech Challenge da Pós-Graduação em Arquitetura de Software da FIAP. O sistema consiste em uma API de gerenciamento de pedidos para uma lanchonete, utilizando arquitetura de microsserviços e práticas modernas de DevOps.
 
 ## 🏛️ Arquitetura do Projeto (Monorepo)

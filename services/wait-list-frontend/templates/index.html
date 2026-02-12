@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Pedidos - FIAP Food</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white overflow-hidden">
+    <header class="bg-slate-800 p-6 shadow-lg flex justify-between items-center">
+        <h1 class="text-4xl font-bold text-orange-500">FIAP Food Delivery</h1>
+        <div id="clock" class="text-2xl font-mono">00:00:00</div>
+    </header>
+
+    <main class="grid grid-cols-2 gap-8 p-8 h-[calc(100vh-120px)]">
+        <section class="bg-slate-800 rounded-3xl p-6 shadow-2xl border-l-8 border-yellow-500">
+            <h2 class="text-5xl font-black text-center mb-8 uppercase tracking-tighter text-yellow-500">Preparando</h2>
+            <div id="preparing-list" class="grid grid-cols-3 gap-4 text-4xl font-bold text-center">
+                </div>
+        </section>
+
+        <section class="bg-slate-800 rounded-3xl p-6 shadow-2xl border-l-8 border-green-500">
+            <h2 class="text-5xl font-black text-center mb-8 uppercase tracking-tighter text-green-500">Prontos</h2>
+            <div id="ready-list" class="grid grid-cols-2 gap-6 text-7xl font-black text-center">
+                </div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = "{{ api_url }}";
+
+        async function fetchOrders() {
+            try {
+                // Endpoint da core-api definido em routes/api.php
+                const response = await fetch(`${API_URL}/api/pedidos`);
+                const orders = await response.json();
+                updateDashboard(orders);
+            } catch (error) {
+                console.error("Erro ao buscar pedidos:", error);
+            }
+        }
+
+        function updateDashboard(orders) {
+            const preparingList = document.getElementById('preparing-list');
+            const readyList = document.getElementById('ready-list');
+
+            preparingList.innerHTML = '';
+            readyList.innerHTML = '';
+
+            orders.forEach(order => {
+                // Lógica de status baseada na entidade Pedido
+                if (order.status === 'Recebido' || order.status === 'Em Preparação') {
+                    preparingList.innerHTML += `<div class="bg-slate-700 p-4 rounded-xl">#${order.id}</div>`;
+                } else if (order.status === 'Pronto') {
+                    readyList.innerHTML += `<div class="bg-green-600 p-8 rounded-2xl animate-pulse">#${order.id}</div>`;
+                }
+            });
+        }
+
+        // Atualiza a cada 5 segundos
+        setInterval(fetchOrders, 5000);
+        fetchOrders();
+
+        // Relógio
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+</body>
+</html>

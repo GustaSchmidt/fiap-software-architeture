@@ -14,8 +14,8 @@ echo "🚀 Iniciando app..."
 # 1. Chave da Aplicação (APP_KEY)
 if [ -z "$APP_KEY" ]; then
   echo "❌ Erro: A variável de ambiente APP_KEY não está definida."
-  echo "Por favor, configure APP_KEY nas secrets do seu serviço Koyeb."
-  exit 1
+  echo "Gerando appkey nova."
+  php artisan key:generate --show
 fi
 echo "🔑 APP_KEY detectada."
 
